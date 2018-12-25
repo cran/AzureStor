@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="Hong Ooi" />
+
+
+<title>Introduction to AzureStor</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+</style>
+
+
+
+<link href="data:text/css;charset=utf-8,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23header%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%20code%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Introduction to AzureStor</h1>
+<h4 class="author"><em>Hong Ooi</em></h4>
+
+
+
+<p>This is a short introduction on how to use AzureStor.</p>
+<div id="the-resource-manager-interface-creating-and-deleting-storage-accounts" class="section level2">
+<h2>The Resource Manager interface: creating and deleting storage accounts</h2>
+<p>AzureStor implements an interface to Azure Resource Manager, which you can use manage storage accounts: creating them, retrieving them, deleting them, and so forth. This is done via the appropriate methods of the <code>az_resource_group</code> class. For example, the following code shows how you might create a new storage account from scratch.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># create a new resource group for the storage account</span>
+rg &lt;-<span class="st"> </span>AzureRMR::az_rm$
+<span class="st">    </span><span class="kw">new</span>(<span class="dt">tenant=</span><span class="st">&quot;{tenant_id}&quot;</span>, <span class="dt">app=</span><span class="st">&quot;{app_id}&quot;</span>, <span class="dt">password=</span><span class="st">&quot;{password}&quot;</span>)$
+<span class="st">    </span><span class="kw">get_subscription</span>(<span class="st">&quot;{subscription_id}&quot;</span>)$
+<span class="st">    </span><span class="kw">create_resource_group</span>(<span class="st">&quot;myresourcegroup&quot;</span>, <span class="dt">location=</span><span class="st">&quot;australiaeast&quot;</span>)
+
+<span class="co"># create the storage account</span>
+stor &lt;-<span class="st"> </span>rg$<span class="kw">create_storage_account</span>(<span class="st">&quot;mynewstorage&quot;</span>)
+stor
+<span class="co"># &lt;Azure resource Microsoft.Storage/storageAccounts/mynewstorage&gt;</span>
+<span class="co">#   Account type: StorageV2</span>
+<span class="co">#   SKU: name=Standard_LRS, tier=Standard </span>
+<span class="co">#   Endpoints:</span>
+<span class="co">#     dfs: https://mynewstorage.dfs.core.windows.net/</span>
+<span class="co">#     web: https://mynewstorage.z26.web.core.windows.net/</span>
+<span class="co">#     blob: https://mynewstorage.blob.core.windows.net/</span>
+<span class="co">#     queue: https://mynewstorage.queue.core.windows.net/</span>
+<span class="co">#     table: https://mynewstorage.table.core.windows.net/</span>
+<span class="co">#     file: https://mynewstorage.file.core.windows.net/ </span>
+<span class="co"># ---</span>
+<span class="co">#   id: /subscriptions/35975484-5360-4e67-bf76-14fcb0ab5b9d/resourceGroups/myresourcegroup/providers/Micro ...</span>
+<span class="co">#   identity: NULL</span>
+<span class="co">#   location: australiaeast</span>
+<span class="co">#   managed_by: NULL</span>
+<span class="co">#   plan: NULL</span>
+<span class="co">#   properties: list(networkAcls, supportsHttpsTrafficOnly, encryption, provisioningState, creationTime,</span>
+<span class="co">#     primaryEndpoints, primaryLocation, statusOfPrimary)</span>
+<span class="co">#   tags: list()</span>
+<span class="co"># ---</span>
+<span class="co">#   Methods:</span>
+<span class="co">#     check, delete, do_operation, get_account_sas, get_blob_endpoint, get_file_endpoint, get_tags, list_keys,</span>
+<span class="co">#     set_api_version, set_tags, sync_fields, update</span></code></pre></div>
+<p>Without any options, this will create a storage account with the following parameters: - General purpose account (all storage types supported) - Locally redundant storage (LRS) replication - Hot access tier (for blob storage) - HTTPS connection required for access</p>
+<p>You can change these by setting the arguments to <code>create_storage_account()</code>. For example, to create an account with geo-redundant storage replication and the default blob access tier set to “cool”:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">stor2 &lt;-<span class="st"> </span>rg$<span class="kw">create_storage_account</span>(<span class="st">&quot;myotherstorage&quot;</span>,
+    <span class="dt">replication=</span><span class="st">&quot;Standard_GRS&quot;</span>,
+    <span class="dt">access_tier=</span><span class="st">&quot;cool&quot;</span>)</code></pre></div>
+<p>And to create a blob storage account and allow non-encrypted (HTTP) connections:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">blobstor &lt;-<span class="st"> </span>rg$<span class="kw">create_storage_account</span>(<span class="st">&quot;mynewblobstorage&quot;</span>,
+    <span class="dt">kind=</span><span class="st">&quot;blobStorage&quot;</span>,
+    <span class="dt">https_only=</span><span class="ot">FALSE</span>)</code></pre></div>
+<p>You can verify that these accounts have been created by going to the Azure Portal (<a href="https://portal.azure.com/" class="uri">https://portal.azure.com/</a>).</p>
+<p>One factor to remember is that all storage accounts in Azure share a common namespace. For example, there can only be one storage account named “mynewstorage” at a time, across all Azure users.</p>
+<p>To retrieve an existing storage account, use the <code>get_storage_account()</code> method. Only the storage account name is required.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># retrieve one of the accounts created above</span>
+stor2 &lt;-<span class="st"> </span>rg$<span class="kw">get_storage_account</span>(<span class="st">&quot;myotherstorage&quot;</span>)</code></pre></div>
+<p>Finally, to delete a storage account, you simply call its <code>delete()</code> method. Alternatively, you can call the <code>delete_storage_account()</code> method of the <code>az_resource_group</code> class, which will do the same thing. In both cases, AzureStor will prompt you for confirmation that you really want to delete the storage account.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># delete the storage accounts created above</span>
+stor$<span class="kw">delete</span>()
+stor2$<span class="kw">delete</span>()
+blobstor$<span class="kw">delete</span>()
+
+<span class="co"># if you don't have a storage account object, use the resource group method:</span>
+rg$<span class="kw">delete_storage_account</span>(<span class="st">&quot;mynewstorage&quot;</span>)
+rg$<span class="kw">delete_storage_account</span>(<span class="st">&quot;myotherstorage&quot;</span>)
+rg$<span class="kw">delete_storage_account</span>(<span class="st">&quot;mynewblobstorage&quot;</span>)</code></pre></div>
+</div>
+<div id="the-client-interface-working-with-storage" class="section level2">
+<h2>The client interface: working with storage</h2>
+<div id="storage-endpoints" class="section level3">
+<h3>Storage endpoints</h3>
+<p>Perhaps the more relevant part of AzureStor for most users is its client interface to storage. With this, you can upload and download files and blobs, create containers and shares, list files, and so on. Unlike the ARM interface, the client interface uses S3 classes. This is for a couple of reasons: it is more familiar to most R users, and it is consistent with most other data manipulation packages in R, in particular the <a href="https://tidyverse.org/">tidyverse</a>.</p>
+<p>The starting point for client access is the <code>storage_endpoint</code> object, which stores information about the endpoint of a storage account: the URL that you use to access storage, along with any authentication information needed. The easiest way to obtain an endpoint object is via the storage account resource object’s <code>get_blob_endpoint()</code>, <code>get_file_endpoint()</code> and <code>get_adls_endpoint()</code> methods:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># create the storage account</span>
+rg &lt;-<span class="st"> </span>AzureRMR::az_rm$
+<span class="st">    </span><span class="kw">new</span>(<span class="dt">tenant=</span><span class="st">&quot;{tenant_id}&quot;</span>, <span class="dt">app=</span><span class="st">&quot;{app_id}&quot;</span>, <span class="dt">password=</span><span class="st">&quot;{password}&quot;</span>)$
+<span class="st">    </span><span class="kw">get_subscription</span>(<span class="st">&quot;{subscription_id}&quot;</span>)$
+<span class="st">    </span><span class="kw">get_resource_group</span>(<span class="st">&quot;myresourcegroup&quot;</span>)
+stor &lt;-<span class="st"> </span>rg$<span class="kw">create_storage_account</span>(<span class="st">&quot;mynewstorage&quot;</span>)
+
+stor$<span class="kw">get_blob_endpoint</span>()
+<span class="co"># Azure blob storage endpoint</span>
+<span class="co"># URL: https://mynewstorage.blob.core.windows.net/</span>
+<span class="co"># Access key: &lt;hidden&gt;</span>
+<span class="co"># Account shared access signature: &lt;none supplied&gt;</span>
+<span class="co"># Storage API version: 2018-03-28</span>
+
+stor$<span class="kw">get_file_endpoint</span>()
+<span class="co"># Azure file storage endpoint</span>
+<span class="co"># URL: https://mynewstorage.file.core.windows.net/</span>
+<span class="co"># Access key: &lt;hidden&gt;</span>
+<span class="co"># Account shared access signature: &lt;none supplied&gt;</span>
+<span class="co"># Storage API version: 2018-03-28</span>
+
+stor$<span class="kw">get_adls_endpoint</span>()
+<span class="co"># Azure Data Lake Storage Gen2 endpoint</span>
+<span class="co"># URL: https://mynewstorage.dfs.core.windows.net/</span>
+<span class="co"># Access key: &lt;hidden&gt;</span>
+<span class="co"># Account shared access signature: &lt;none supplied&gt;</span>
+<span class="co"># Storage API version: 2018-03-28</span></code></pre></div>
+<p>More practically, you will usually want to work with a storage endpoint without having to go through the process of authenticating with Azure Resource Manager. Often, you may not have any ARM credentials to start with (a tenant ID and/or service principal details). In this case, you can create the endpoint object directly with the <code>blob_endpoint()</code>, <code>file_endpoint()</code> and <code>adls_endpoint()</code> functions. When you create the endpoint this way, you have to provide the access key explicitly (assuming you know what it is).</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># same as using the get_xxxx_endpoint() methods above</span>
+<span class="kw">blob_endpoint</span>(<span class="st">&quot;https://mynewstorage.blob.core.windows.net/&quot;</span>,
+    <span class="dt">key=</span><span class="st">&quot;mystorageaccesskey&quot;</span>)
+<span class="kw">file_endpoint</span>(<span class="st">&quot;https://mynewstorage.file.core.windows.net/&quot;</span>,
+    <span class="dt">key=</span><span class="st">&quot;mystorageaccesskey&quot;</span>)
+<span class="kw">adls_endpoint</span>(<span class="st">&quot;https://mynewstorage.dfs.core.windows.net/&quot;</span>,
+    <span class="dt">key=</span><span class="st">&quot;mystorageaccesskey&quot;</span>)</code></pre></div>
+<p>Instead of an access key, you can provide a <a href="https://docs.microsoft.com/en-us/azure/storage/common/storage-dotnet-shared-access-signature-part-1">shared access signature (SAS)</a> to gain authenticated access. The main difference between using a key and a SAS is that the former unlocks access to the <em>entire</em> storage account. A user who has a key can access all containers and files, and can transfer, modify and delete data without restriction. On the other hand, a user with a SAS can be limited to have access only to specific containers, or be limited to read access, or only for a given span of time, and so on. This is usually much better in terms of security.</p>
+<p>Usually, the SAS will be provided to you by your system administrator. However, if you have the storage acccount resource object, you can generate and use a SAS as follows. Note that generating a SAS requires the storage account’s access key.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># shared access signature: read/write access, container+object access, valid for 8 hours</span>
+sas &lt;-<span class="st"> </span>stor$<span class="kw">get_account_sas</span>(<span class="dt">permissions=</span><span class="st">&quot;rw&quot;</span>,
+    <span class="dt">resource_types=</span><span class="st">&quot;co&quot;</span>,
+    <span class="dt">start=</span><span class="kw">Sys.time</span>(),
+    <span class="dt">end=</span><span class="kw">Sys.time</span>() +<span class="st"> </span><span class="dv">8</span> *<span class="st"> </span><span class="dv">60</span> *<span class="st"> </span><span class="dv">60</span>,
+    <span class="dt">key=</span>stor$<span class="kw">list_keys</span>()[<span class="dv">1</span>])
+
+<span class="co"># create an endpoint object with a SAS, but without an access key</span>
+blob_endp &lt;-<span class="st"> </span>stor$<span class="kw">get_blob_endpoint</span>(<span class="dt">key=</span><span class="ot">NULL</span>, <span class="dt">sas=</span>sas)</code></pre></div>
+<p>If you don’t have a key or a SAS, you will only have access to unauthenticated (public) containers.</p>
+</div>
+<div id="container-and-object-access-blob-containers-file-shares-adls-filesystems-blobs-files" class="section level3">
+<h3>Container and object access: blob containers, file shares, ADLS filesystems, blobs, files</h3>
+<p>The client interface for AzureStor supports blob storage, file storage, and Azure Data Lake Storage Gen 2. All of these types have some features in common with each other. In particular, the storage within each type is organised into containers: blob <em>containers</em>, file <em>shares</em>, and ADLSgen2 <em>filesystems</em>. Given an endpoint object, AzureStor provides the following methods for working with containers:</p>
+<ul>
+<li><code>blob_container, create_blob_container, delete_blob_container</code>: get an existing blob container, create a new container, and delete a container</li>
+<li><code>list_blob_containers</code>: return a list of blob container objects</li>
+<li><code>file_share, create_file_share, delete_file_share</code>: get an existing file share, create a new share, and delete a share</li>
+<li><code>list_file_shares</code>: return a list of file share objects</li>
+<li><code>adls_filesystem, create_adls_filesystem, delete_adls_filesystem</code>: get an existing ADLSgen2 filesystem, create a new filesystem, and delete a filesystem</li>
+<li><code>list_adls_filesystems</code>: return a list of ADLSgen2 filesystem objects</li>
+</ul>
+<p>You can only use the methods corresponding to a given endpoint type. For example, it’s an error to try to list the file shares for a blob endpoint, or create a blob container within an ADLSgen2 endpoint.</p>
+<p>Here is some example blob container code showing their use. The file share and ADLSgen2 filesystem code is similar, except that they don’t allow any form of unauthenticated access.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># an existing container</span>
+cont &lt;-<span class="st"> </span><span class="kw">blob_container</span>(blob_endp, <span class="st">&quot;mycontainer&quot;</span>)
+cont
+<span class="co"># Azure blob container 'mycontainer'</span>
+<span class="co"># URL: https://mynewstorage.blob.core.windows.net/mycontainer</span>
+<span class="co"># Access key: &lt;hidden&gt;</span>
+<span class="co"># Account shared access signature: &lt;none supplied&gt;</span>
+<span class="co"># Storage API version: 2018-03-28</span>
+
+<span class="co"># create a new container and allow unauthenticated (public) access to blobs</span>
+newcont &lt;-<span class="st"> </span><span class="kw">create_blob_container</span>(blob_endp, <span class="st">&quot;mynewcontainer&quot;</span>, <span class="dt">public_access=</span><span class="st">&quot;blob&quot;</span>)
+newcont
+<span class="co"># Azure blob container 'mynewcontainer'</span>
+<span class="co"># URL: https://mynewstorage.blob.core.windows.net/mynewcontainer</span>
+<span class="co"># Access key: &lt;hidden&gt;</span>
+<span class="co"># Account shared access signature: &lt;none supplied&gt;</span>
+<span class="co"># Storage API version: 2018-03-28</span>
+
+<span class="co"># delete the container</span>
+<span class="kw">delete_blob_container</span>(newcont)
+
+<span class="co"># piping also works</span>
+<span class="kw">library</span>(magrittr)
+blob_endp %&gt;%<span class="st"> </span>
+<span class="st">    </span><span class="kw">blob_container</span>(<span class="st">&quot;mycontainer&quot;</span>)
+<span class="co"># Azure blob container 'mycontainer'</span>
+<span class="co"># URL: https://mynewstorage.blob.core.windows.net/mycontainer</span>
+<span class="co"># Access key: &lt;hidden&gt;</span>
+<span class="co"># Account shared access signature: &lt;none supplied&gt;</span>
+<span class="co"># Storage API version: 2018-03-28</span></code></pre></div>
+<p>As a convenience, instead of providing an endpoint object and a container name, you can also provide the full URL to the container. If you do this, you’ll also have to supply any necessary authentication details such as the access key or SAS.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">blob_container</span>(<span class="st">&quot;https://mynewstorage.blob.core.windows.net/mycontainer&quot;</span>,
+    <span class="dt">key=</span><span class="st">&quot;mystorageaccountkey&quot;</span>)
+<span class="kw">file_share</span>(<span class="st">&quot;https://mynewstorage.file.core.windows.net/myshare&quot;</span>,
+    <span class="dt">key=</span><span class="st">&quot;mystorageaccountkey&quot;</span>)
+<span class="kw">adls_filesystem</span>(<span class="st">&quot;https://mynewstorage.dfs.core.windows.net/myshare&quot;</span>,
+    <span class="dt">key=</span><span class="st">&quot;mystorageaccountkey&quot;</span>)</code></pre></div>
+<p>The <code>list_blobs()</code>, <code>list_azure_files()</code> and <code>list_adls_files()</code> functions will list the storage objects within a container of the requisite type. Note the “azure” and “adls” in <code>list_azure_files</code> and <code>list_adls_files</code> to avoid confusion with R’s regular <code>list.files</code> function.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># list blobs inside a blob container</span>
+<span class="kw">list_blobs</span>(cont)
+<span class="co">#      Name       Last-Modified Content-Length</span>
+<span class="co"># 1  fs.txt 2018-10-13 11:34:30            132</span>
+<span class="co"># 2 fs2.txt 2018-10-13 11:04:36         731930</span>
+
+<span class="co"># if you want only the filenames</span>
+<span class="kw">list_blobs</span>(cont, <span class="dt">info=</span><span class="st">&quot;name&quot;</span>)
+<span class="co"># [1] &quot;fs.txt&quot;  &quot;fs2.txt&quot;</span>
+
+
+<span class="co"># files inside a file share</span>
+<span class="kw">list_azure_files</span>(share, <span class="st">&quot;/&quot;</span>)
+<span class="co">#       name type   size</span>
+<span class="co"># 1 100k.txt File 100000</span>
+<span class="co"># 2   fs.txt File    132</span>
+
+
+<span class="co"># and files inside an ADLS filesystem</span>
+<span class="kw">list_adls_files</span>(fs, <span class="st">&quot;/&quot;</span>)
+<span class="co">#        name contentLength isDirectory                  lastModified permissions</span>
+<span class="co"># 1 blog.html         27128       FALSE Mon, 03 Dec 2018 15:20:31 GMT   rw-r-----</span>
+<span class="co"># 2    newdir             0        TRUE Thu, 29 Nov 2018 03:42:56 GMT   rwxr-x---</span></code></pre></div>
+<p>To transfer files and blobs, use the following functions:</p>
+<ul>
+<li><code>upload_blob</code>: upload a file to a blob container.</li>
+<li><code>download_blob</code>: download a file from a blob container.</li>
+<li><code>upload_azure_file</code>: upload a file to a file share.</li>
+<li><code>download_azure_file</code>: download a file from a file share.</li>
+<li><code>upload_to_url</code>: upload a file to a destination given by a URL. This dispatches to either <code>upload_blob</code> or <code>upload_azure_file</code> as appropriate.</li>
+<li><code>download_from_url</code>: download a file from a source given by a URL, the opposite of <code>upload_from_url</code>. This is analogous to base R’s <code>download.file</code> but with authentication built in.</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># upload a file to a blob container</span>
+blob_endp &lt;-<span class="st"> </span><span class="kw">blob_endpoint</span>(<span class="st">&quot;https://mynewstorage.blob.core.windows.net/&quot;</span>,
+    <span class="dt">key=</span><span class="st">&quot;mystorageaccesskey&quot;</span>)
+cont &lt;-<span class="st"> </span><span class="kw">blob_container</span>(blob_endp, <span class="st">&quot;mycontainer&quot;</span>)
+<span class="kw">upload_blob</span>(cont, <span class="dt">src=</span><span class="st">&quot;myfile&quot;</span>, <span class="dt">dest=</span><span class="st">&quot;myblob&quot;</span>)
+
+<span class="co"># again, piping works</span>
+<span class="kw">blob_endpoint</span>(<span class="st">&quot;https://mynewstorage.blob.core.windows.net/&quot;</span>, <span class="dt">key=</span><span class="st">&quot;mystorageaccesskey&quot;</span>) %&gt;%
+<span class="st">    </span><span class="kw">blob_container</span>(<span class="st">&quot;mycontainer&quot;</span>) %&gt;%<span class="st"> </span>
+<span class="st">    </span><span class="kw">upload_blob</span>(<span class="st">&quot;myfile&quot;</span>, <span class="st">&quot;myblob&quot;</span>)
+
+<span class="co"># download a blob, overwriting any existing destination file</span>
+<span class="kw">download_blob</span>(cont, <span class="st">&quot;myblob&quot;</span>, <span class="st">&quot;myfile&quot;</span>, <span class="dt">overwrite=</span><span class="ot">TRUE</span>)
+
+<span class="co"># as a convenience, you can transfer files directly to and from an Azure URL</span>
+<span class="kw">download_from_url</span>(<span class="st">&quot;https://mynewstorage.blob.core.windows.net/mycontainer/myblob&quot;</span>,
+    <span class="st">&quot;myfile&quot;</span>,
+    <span class="dt">key=</span><span class="st">&quot;mystorageaccesskey&quot;</span>,
+    <span class="dt">overwrite=</span><span class="ot">TRUE</span>)</code></pre></div>
+<p>File shares and ADLS filesystems have the additional feature of supporting directories. To create and delete directories, use <code>create_azure_dir()</code> and <code>delete_azure_dir()</code> for a file share, and <code>create_adls_dir()</code> and <code>delete_adls_dir()</code> for an ADLS filesystem.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">list_azure_files</span>(share, <span class="st">&quot;/&quot;</span>)
+<span class="co">#       name type   size</span>
+<span class="co"># 1 100k.txt File 100000</span>
+<span class="co"># 2   fs.txt File    132</span>
+
+<span class="co"># create a directory under the root of the file share</span>
+<span class="kw">create_azure_dir</span>(share, <span class="st">&quot;newdir&quot;</span>)
+
+<span class="co"># confirm that the directory has been created</span>
+<span class="kw">list_azure_files</span>(share, <span class="st">&quot;/&quot;</span>)
+<span class="co">#       name      type   size</span>
+<span class="co"># 1 100k.txt      File 100000</span>
+<span class="co"># 2   fs.txt      File    132</span>
+<span class="co"># 3   newdir Directory     NA</span>
+
+<span class="co"># delete the directory</span>
+<span class="kw">delete_azure_dir</span>(share, <span class="st">&quot;newdir&quot;</span>)</code></pre></div>
+<p>For more information about the different types of storage, see the <a href="https://docs.microsoft.com/en-us/azure/storage/">Microsoft Docs site</a>. Note that there are other types of storage (queue, table) that do not have a client interface exposed by AzureStor.</p>
+</div>
+</div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
