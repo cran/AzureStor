@@ -8,28 +8,17 @@ subscription <- Sys.getenv("AZ_TEST_SUBSCRIPTION")
 if(tenant == "" || app == "" || password == "" || subscription == "")
     skip("Authentication tests skipped: ARM credentials not set")
 
+rgname <- Sys.getenv("AZ_TEST_STORAGE_RG")
+storname <- Sys.getenv("AZ_TEST_STORAGE_NOHNS")
 
-sub <- az_rm$new(tenant=tenant, app=app, password=password)$get_subscription(subscription)
-rgname <- paste(sample(letters, 20, replace=TRUE), collapse="")
-rg <- sub$create_resource_group(rgname, location="australiaeast")
+if(rgname == "" || storname == "")
+    skip("File client tests skipped: resource names not set")
+
+sub <- AzureRMR::az_rm$new(tenant=tenant, app=app, password=password)$get_subscription(subscription)
+stor <- sub$get_resource_group(rgname)$get_storage_account(storname)
 
 test_that("File client interface works",
 {
-
-    storname <- paste(sample(letters, 20, replace=TRUE), collapse="")
-    stor <- rg$create_storage_account(storname, hierarchical_namespace_enabled=TRUE)
-
-    # wait until provisioning is complete
-    for(i in 1:100)
-    {
-        Sys.sleep(5)
-        state <- stor$sync_fields()
-        if(state %in% c("Succeeded", "Error", "Failed"))
-            break
-    }
-    if(state != "Succeeded")
-        stop("Unable to create storage account")
-
     fl <- stor$get_file_endpoint()
     fl2 <- file_endpoint(stor$properties$primaryEndpoints$file, key=stor$list_keys()[1])
     expect_is(fl, "file_endpoint")
@@ -67,6 +56,11 @@ test_that("File client interface works",
     expect_silent(download_azure_file(share, "iris.csv", new_file, overwrite=TRUE))
     expect_identical(readBin(orig_file, "raw", n=1e5), readBin(new_file, "raw", n=1e5))
 
+    # download from url
+    suppressWarnings(file.remove(new_file))
+    url <- file.path(fl$url, share$name, "iris.csv")
+    download_from_url(url, new_file, key=fl$key)
+
     # directory manipulation
     create_azure_dir(share, "dir1")
     create_azure_dir(share, "/dir_with_root")
@@ -96,12 +90,83 @@ test_that("File client interface works",
     expect_identical(readBin(file_100k, "raw", n=2e5), readBin(single_dl, "raw", n=2e5))
     expect_identical(readBin(file_100k, "raw", n=2e5), readBin(blocked_dl, "raw", n=2e5))
 
+    # upload/download with SAS
+    sas <- stor$get_account_sas(permissions="rw")
+    Sys.sleep(2)  # deal with synchronisation issues
+    flsas <- file_endpoint(stor$properties$primaryEndpoints$file, sas=sas)
+    sharesas <- create_file_share(flsas, "sharesas")
+    upload_azure_file(sharesas, orig_file, "iris.csv")
+
+    sas_dl <- file.path(tempdir(), "iris_sas.csv")
+    suppressWarnings(file.remove(sas_dl))
+    download_azure_file(sharesas, "iris.csv", sas_dl)
+    expect_identical(readBin(orig_file, "raw", n=1e5), readBin(sas_dl, "raw", n=1e5))
+
+    # upload from connection
+    json <- jsonlite::toJSON(iris, dataframe="columns", auto_unbox=TRUE, pretty=TRUE)
+    con <- textConnection(json)
+    upload_azure_file(share, con, "iris.json")
+
+    con_dl1 <- file.path(tempdir(), "iris.json")
+    suppressWarnings(file.remove(con_dl1))
+    download_azure_file(share, "iris.json", con_dl1)
+    expect_identical(readBin("../resources/iris.json", "raw", n=1e5), readBin(con_dl1, "raw", n=1e5))
+
+    rds <- serialize(iris, NULL)
+    con <- rawConnection(rds)
+    upload_azure_file(share, con, "iris.rds")
+
+    con_dl2 <- file.path(tempdir(), "iris.rds")
+    suppressWarnings(file.remove(con_dl2))
+    download_azure_file(share, "iris.rds", con_dl2)
+    expect_identical(readBin("../resources/iris.rds", "raw", n=1e5), readBin(con_dl2, "raw", n=1e5))
+
+    # download to memory
+    rawvec <- download_azure_file(share, "iris.rds", NULL)
+    iris2 <- unserialize(rawvec)
+    expect_identical(iris, iris2)
+
+    con <- rawConnection(raw(0), open="r+")
+    download_azure_file(share, "iris.json", con)
+    iris3 <- as.data.frame(jsonlite::fromJSON(con))
+    expect_identical(iris, iris3)
+
+    # multiple file transfers
+    files <- lapply(1:10, function(f) paste0(sample(letters, 1000, replace=TRUE), collapse=""))
+    filenames <- sapply(1:10, function(n) file.path(tempdir(), sprintf("multitransfer_%d", n)))
+    suppressWarnings(file.remove(filenames))
+    mapply(writeLines, files, filenames)
+
+    create_azure_dir(share, "multi")
+    multiupload_azure_file(share, file.path(tempdir(), "multitransfer_*"), "multi")
+
+    dest_dir <- file.path(tempdir(), "file_multitransfer")
+    suppressWarnings(unlink(dest_dir, recursive=TRUE))
+    dir.create(dest_dir)
+    multidownload_azure_file(share, "multi/multitransfer_*", dest_dir, overwrite=TRUE)
+
+    expect_true(all(sapply(filenames, function(f)
+    {
+        src <- readBin(f, "raw", n=1e5)
+        dest <- readBin(file.path(dest_dir, basename(f)), "raw", n=1e5)
+        identical(src, dest)
+    })))
+
     # ways of deleting a share
     delete_file_share(share, confirm=FALSE)
     delete_file_share(fl, "newshare2", confirm=FALSE)
+    delete_file_share(fl, "sharesas", confirm=FALSE)
     delete_file_share(paste0(fl$url, "newshare3"), key=fl$key, confirm=FALSE)
     Sys.sleep(5)
     expect_true(is_empty(list_file_shares(fl)))
+
+    close(con)
 })
 
-rg$delete(confirm=FALSE)
+
+teardown(
+{
+    fl <- stor$get_file_endpoint()
+    conts <- list_file_shares(fl)
+    lapply(conts, delete_file_share, confirm=FALSE)
+})

@@ -20,7 +20,7 @@
 #' - `replication`: The replication strategy for the account. The default is locally-redundant storage (LRS).
 #' - `access_tier`: The access tier, either `"hot"` or `"cool"`, for blobs.
 #' - `https_only`: Whether a HTTPS connection is required to access the storage.
-#' - `hierarchical_namespace_enabled`: Whether to enable hierarchical namespaces, which are a feature of Azure Data Lake Storage Gen 2 and provide more a efficient way to manage storage. ADLS Gen2 is currently (as of December 2018) in general-access public preview. If this is enabled, the blob storage API for the account is disabled; see below.
+#' - `hierarchical_namespace_enabled`: Whether to enable hierarchical namespaces, which are a feature of Azure Data Lake Storage Gen 2 and provide more a efficient way to manage storage. See 'Details' below.
 #' - `properties`: A list of other properties for the storage account.
 #' - ... Other named arguments to pass to the [az_storage] initialization function.
 #'
@@ -30,11 +30,11 @@
 #' - file storage 
 #' - table storage
 #' - queue storage
-#' - Azure Data Lake Storage Gen2 (in public preview)
+#' - Azure Data Lake Storage Gen2
 #'
 #' Accounts created with `kind = "BlobStorage"` can only host blob storage, while those with `kind = "FileStorage"` can only host file storage. Accounts with `kind = "StorageV2"` can host all types of storage. Currently, AzureStor provides an R interface to ADLSgen2, blob and file storage.
 #'
-#' Currently (as of December 2018), if hierarchical namespaces are enabled, the blob API for the account is disabled. The blob endpoint is still accessible, but blob operations on the endpoint will fail. Full interoperability between blobs and ADLS is planned for 2019.
+#' Currently (as of February 2019), if hierarchical namespaces are enabled, the blob API for the account is disabled. The blob endpoint is still accessible, but blob operations on the endpoint will fail. Full interoperability between blobs and ADLSgen2 is planned for later in 2019.
 #'
 #' @section Value:
 #' An object of class `az_storage` representing the created storage account.
@@ -148,14 +148,8 @@ NULL
 NULL
 
 
-# all methods extending classes in external package must go in .onLoad
-.onLoad <- function(libname, pkgname)
+add_methods <- function()
 {
-    api <- "2018-03-28"
-    adls_api <- "2018-06-17"
-    options(azure_storage_api_version=api)
-    options(azure_adls_api_version=adls_api)
-
     ## extending AzureRMR classes
 
     AzureRMR::az_resource_group$set("public", "create_storage_account", overwrite=TRUE,
@@ -169,18 +163,18 @@ NULL
                 supportsHttpsTrafficOnly=https_only,
                 isHnsEnabled=hierarchical_namespace_enabled))
 
-        az_storage$new(self$token, self$subscription, self$name,
-                       type="Microsoft.Storage/storageAccounts", name=name, location=location,
-                       kind=kind, sku=list(name=replication),
-                       properties=properties, ...)
+        AzureStor::az_storage$new(self$token, self$subscription, self$name,
+            type="Microsoft.Storage/storageAccounts", name=name, location=location,
+            kind=kind, sku=list(name=replication),
+            properties=properties, ...)
     })
 
 
     AzureRMR::az_resource_group$set("public", "get_storage_account", overwrite=TRUE,
     function(name)
     {
-        az_storage$new(self$token, self$subscription, self$name,
-                       type="Microsoft.Storage/storageAccounts", name=name)
+        AzureStor::az_storage$new(self$token, self$subscription, self$name,
+            type="Microsoft.Storage/storageAccounts", name=name)
     })
 
 
@@ -204,14 +198,14 @@ NULL
 
         cont <- call_azure_rm(self$token, self$subscription, op, api_version=api_version)
         lst <- lapply(cont$value,
-            function(parms) az_storage$new(self$token, self$subscription, deployed_properties=parms))
+            function(parms) AzureStor::az_storage$new(self$token, self$subscription, deployed_properties=parms))
 
         # keep going until paging is complete
         while(!is_empty(cont$nextLink))
         {
             cont <- call_azure_url(self$token, cont$nextLink)
             lst <- lapply(cont$value,
-                function(parms) az_storage$new(self$token, self$subscription, deployed_properties=parms))
+                function(parms) AzureStor::az_storage$new(self$token, self$subscription, deployed_properties=parms))
         }
         named_list(lst)
     })
@@ -228,14 +222,14 @@ NULL
 
         cont <- call_azure_rm(self$token, self$id, op, api_version=api_version)
         lst <- lapply(cont$value,
-            function(parms) az_storage$new(self$token, self$id, deployed_properties=parms))
+            function(parms) AzureStor::az_storage$new(self$token, self$id, deployed_properties=parms))
 
         # keep going until paging is complete
         while(!is_empty(cont$nextLink))
         {
             cont <- call_azure_url(self$token, cont$nextLink)
             lst <- lapply(cont$value,
-                function(parms) az_storage$new(self$token, self$id, deployed_properties=parms))
+                function(parms) AzureStor::az_storage$new(self$token, self$id, deployed_properties=parms))
         }
         named_list(lst)
     })

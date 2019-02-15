@@ -1,5 +1,28 @@
 #' @import AzureRMR
-#' @importFrom utils URLencode modifyList packageVersion
+#' @importFrom utils URLencode modifyList packageVersion glob2rx
 NULL
 
-globalVariables("self", "AzureStor")
+globalVariables(c("self", "pool"), "AzureStor")
+
+.AzureStor <- new.env()
+
+
+.onLoad <- function(libname, pkgname)
+{
+    api <- "2018-03-28"
+    adls_api <- "2018-06-17"
+    options(azure_storage_api_version=api)
+    options(azure_adls_api_version=adls_api)
+
+    # all methods extending classes in external package must be run from .onLoad
+    add_methods()
+}
+
+
+.onUnload <- function(libpath)
+{
+    if(exists("pool", envir=.AzureStor))
+        try(parallel::stopCluster(.AzureStor$pool), silent=TRUE)
+}
+
+

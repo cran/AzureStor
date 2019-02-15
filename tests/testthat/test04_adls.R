@@ -8,28 +8,17 @@ subscription <- Sys.getenv("AZ_TEST_SUBSCRIPTION")
 if(tenant == "" || app == "" || password == "" || subscription == "")
     skip("Authentication tests skipped: ARM credentials not set")
 
+rgname <- Sys.getenv("AZ_TEST_STORAGE_RG")
+storname <- Sys.getenv("AZ_TEST_STORAGE_HNS")
 
-sub <- az_rm$new(tenant=tenant, app=app, password=password)$get_subscription(subscription)
-rgname <- paste(sample(letters, 20, replace=TRUE), collapse="")
-rg <- sub$create_resource_group(rgname, location="australiaeast")
+if(rgname == "" || storname == "")
+    skip("ADLSgen2 client tests skipped: resource names not set")
+
+sub <- AzureRMR::az_rm$new(tenant=tenant, app=app, password=password)$get_subscription(subscription)
+stor <- sub$get_resource_group(rgname)$get_storage_account(storname)
 
 test_that("ADLSgen2 client interface works",
 {
-
-    storname <- paste(sample(letters, 20, replace=TRUE), collapse="")
-    stor <- rg$create_storage_account(storname, hierarchical_namespace_enabled=TRUE)
-
-    # wait until provisioning is complete
-    for(i in 1:100)
-    {
-        Sys.sleep(5)
-        state <- stor$sync_fields()
-        if(state %in% c("Succeeded", "Error", "Failed"))
-            break
-    }
-    if(state != "Succeeded")
-        stop("Unable to create storage account")
-
     ad <- stor$get_adls_endpoint()
     ad2 <- adls_endpoint(stor$properties$primaryEndpoints$dfs, key=stor$list_keys()[1])
     expect_is(ad, "adls_endpoint")
@@ -67,6 +56,11 @@ test_that("ADLSgen2 client interface works",
     expect_silent(download_adls_file(fs, "iris.csv", new_file, overwrite=TRUE))
     expect_identical(readBin(orig_file, "raw", n=1e5), readBin(new_file, "raw", n=1e5))
 
+    # download from url
+    suppressWarnings(file.remove(new_file))
+    url <- file.path(ad$url, fs$name, "iris.csv")
+    download_from_url(url, new_file, key=ad$key)
+
     # directory manipulation
     create_adls_dir(fs, "dir1")
     create_adls_dir(fs, "/dir_with_root")
@@ -96,12 +90,110 @@ test_that("ADLSgen2 client interface works",
     expect_identical(readBin(file_100k, "raw", n=2e5), readBin(single_dl, "raw", n=2e5))
     expect_identical(readBin(file_100k, "raw", n=2e5), readBin(blocked_dl, "raw", n=2e5))
 
+    # upload from connection
+    json <- jsonlite::toJSON(iris, dataframe="columns", auto_unbox=TRUE, pretty=TRUE)
+    con <- textConnection(json)
+    upload_adls_file(fs, con, "iris.json")
+
+    con_dl1 <- file.path(tempdir(), "iris.json")
+    suppressWarnings(file.remove(con_dl1))
+    download_adls_file(fs, "iris.json", con_dl1)
+    expect_identical(readBin("../resources/iris.json", "raw", n=1e5), readBin(con_dl1, "raw", n=1e5))
+
+    rds <- serialize(iris, NULL)
+    con <- rawConnection(rds)
+    upload_adls_file(fs, con, "iris.rds")
+
+    con_dl2 <- file.path(tempdir(), "iris.rds")
+    suppressWarnings(file.remove(con_dl2))
+    download_adls_file(fs, "iris.rds", con_dl2)
+    expect_identical(readBin("../resources/iris.rds", "raw", n=1e5), readBin(con_dl2, "raw", n=1e5))
+
+    # download to memory
+    rawvec <- download_adls_file(fs, "iris.rds", NULL)
+    iris2 <- unserialize(rawvec)
+    expect_identical(iris, iris2)
+
+    con <- rawConnection(raw(0), open="r+")
+    download_adls_file(fs, "iris.json", con)
+    iris3 <- as.data.frame(jsonlite::fromJSON(con))
+    expect_identical(iris, iris3)
+
+    # multiple file transfers
+    files <- lapply(1:10, function(f) paste0(sample(letters, 1000, replace=TRUE), collapse=""))
+    filenames <- sapply(1:10, function(n) file.path(tempdir(), sprintf("multitransfer_%d", n)))
+    suppressWarnings(file.remove(filenames))
+    mapply(writeLines, files, filenames)
+
+    create_adls_dir(fs, "multi")
+    multiupload_adls_file(fs, file.path(tempdir(), "multitransfer_*"), "multi")
+
+    dest_dir <- file.path(tempdir(), "adls_multitransfer")
+    suppressWarnings(unlink(dest_dir, recursive=TRUE))
+    dir.create(dest_dir)
+    multidownload_adls_file(fs, "multi/multitransfer_*", dest_dir, overwrite=TRUE)
+
+    expect_true(all(sapply(filenames, function(f)
+    {
+        src <- readBin(f, "raw", n=1e5)
+        dest <- readBin(file.path(dest_dir, basename(f)), "raw", n=1e5)
+        identical(src, dest)
+    })))
+
     # ways of deleting a filesystem
     delete_adls_filesystem(fs, confirm=FALSE)
     delete_adls_filesystem(ad, "newfs2", confirm=FALSE)
     delete_adls_filesystem(paste0(ad$url, "newfs3"), key=ad$key, confirm=FALSE)
     Sys.sleep(5)
     expect_true(is_empty(list_adls_filesystems(ad)))
+
+    close(con)
 })
 
-rg$delete(confirm=FALSE)
+
+test_that("AAD authentication works",
+{
+    url <- stor$get_adls_endpoint()$url 
+    token <- AzureRMR::get_azure_token("https://storage.azure.com/", tenant=tenant, app=app, password=password)
+    ad <- adls_endpoint(url, token=token)
+    fs <- create_adls_filesystem(ad, "newfs4")
+
+    # upload and download
+    orig_file <- "../resources/iris.csv"
+    upload_adls_file(fs, orig_file, "iris.csv")
+    tok_dl <- file.path(tempdir(), "iris_tok.csv")
+    suppressWarnings(file.remove(tok_dl))
+    download_adls_file(fs, "iris.csv", tok_dl)
+    expect_identical(readBin(orig_file, "raw", n=1e5), readBin(tok_dl, "raw", n=1e5))
+
+    # multiple upload and download
+    files <- lapply(1:10, function(f) paste0(sample(letters, 1000, replace=TRUE), collapse=""))
+    filenames <- sapply(1:10, function(n) file.path(tempdir(), sprintf("multitransfer_%d", n)))
+    suppressWarnings(file.remove(filenames))
+    mapply(writeLines, files, filenames)
+
+    multiupload_adls_file(fs, file.path(tempdir(), "multitransfer_*"), "/")
+
+    dest_dir <- file.path(tempdir(), "adls_multitransfer")
+    suppressWarnings(unlink(dest_dir, recursive=TRUE))
+    dir.create(dest_dir)
+    multidownload_adls_file(fs, "multitransfer_*", dest_dir, overwrite=TRUE)
+
+    expect_true(all(sapply(filenames, function(f)
+    {
+        src <- readBin(f, "raw", n=1e5)
+        dest <- readBin(file.path(dest_dir, basename(f)), "raw", n=1e5)
+        identical(src, dest)
+    })))
+
+    delete_adls_filesystem(fs, confirm=FALSE)
+    expect_true(is_empty(list_adls_filesystems(ad)))
+})
+
+
+teardown(
+{
+    ad <- stor$get_adls_endpoint()
+    conts <- list_adls_filesystems(ad)
+    lapply(conts, delete_adls_filesystem, confirm=FALSE)
+})

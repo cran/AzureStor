@@ -3,7 +3,7 @@
 #' Get, list, create, or delete file shares.
 #'
 #' @param endpoint Either a file endpoint object as created by [storage_endpoint], or a character string giving the URL of the endpoint.
-#' @param key,sas If an endpoint object is not supplied, authentication details. If a key is provided, the SAS is not used. If neither an access key nor a SAS are provided, only public (anonymous) access to the share is possible.
+#' @param key,token,sas If an endpoint object is not supplied, authentication credentials: either an access key, an Azure Active Directory (AAD) token, or a SAS, in that order of priority. 
 #' @param api_version If an endpoint object is not supplied, the storage API version to use when interacting with the host. Currently defaults to `"2018-03-28"`.
 #' @param name The name of the file share to get, create, or delete.
 #' @param confirm For deleting a share, whether to ask for confirmation.
@@ -18,7 +18,8 @@
 #'
 #' For `list_file_shares`, a list of such objects.
 #'
-#' @seealso [storage_endpoint], [az_storage]
+#' @seealso
+#' [storage_endpoint], [az_storage], [storage_container]
 #'
 #' @examples
 #' \dontrun{
@@ -48,11 +49,11 @@ file_share <- function(endpoint, ...)
 
 #' @rdname file_share
 #' @export
-file_share.character <- function(endpoint, key=NULL, sas=NULL,
+file_share.character <- function(endpoint, key=NULL, token=NULL, sas=NULL,
                                  api_version=getOption("azure_storage_api_version"),
                                  ...)
 {
-    do.call(file_share, generate_endpoint_container(endpoint, key, sas, api_version))
+    do.call(file_share, generate_endpoint_container(endpoint, key, token, sas, api_version))
 }
 
 #' @rdname file_share
@@ -60,7 +61,7 @@ file_share.character <- function(endpoint, key=NULL, sas=NULL,
 file_share.file_endpoint <- function(endpoint, name, ...)
 {
     obj <- list(name=name, endpoint=endpoint)
-    class(obj) <- "file_share"
+    class(obj) <- c("file_share", "storage_container")
     obj
 }
 
@@ -91,11 +92,11 @@ list_file_shares <- function(endpoint, ...)
 
 #' @rdname file_share
 #' @export
-list_file_shares.character <- function(endpoint, key=NULL, sas=NULL,
+list_file_shares.character <- function(endpoint, key=NULL, token=NULL, sas=NULL,
                                        api_version=getOption("azure_storage_api_version"),
                                        ...)
 {
-    do.call(list_file_shares, generate_endpoint_container(endpoint, key, sas, api_version))
+    do.call(list_file_shares, generate_endpoint_container(endpoint, key, token, sas, api_version))
 }
 
 #' @rdname file_share
@@ -120,11 +121,11 @@ create_file_share <- function(endpoint, ...)
 
 #' @rdname file_share
 #' @export
-create_file_share.character <- function(endpoint, key=NULL, sas=NULL,
+create_file_share.character <- function(endpoint, key=NULL, token=NULL, sas=NULL,
                                         api_version=getOption("azure_storage_api_version"),
                                         ...)
 {
-    endp <- generate_endpoint_container(endpoint, key, sas, api_version)
+    endp <- generate_endpoint_container(endpoint, key, token, sas, api_version)
     create_file_share(endp$endpoint, endp$name, ...)
 }
 
@@ -155,11 +156,11 @@ delete_file_share <- function(endpoint, ...)
 
 #' @rdname file_share
 #' @export
-delete_file_share.character <- function(endpoint, key=NULL, sas=NULL,
+delete_file_share.character <- function(endpoint, key=NULL, token=NULL, sas=NULL,
                                         api_version=getOption("azure_storage_api_version"),
                                         ...)
 {
-    endp <- generate_endpoint_container(endpoint, key, sas, api_version)
+    endp <- generate_endpoint_container(endpoint, key, token, sas, api_version)
     delete_file_share(endp$endpoint, endp$name, ...)
 }
 
@@ -194,17 +195,30 @@ delete_file_share.file_endpoint <- function(endpoint, name, confirm=TRUE, ...)
 #' @param share A file share object.
 #' @param dir,file A string naming a directory or file respectively.
 #' @param info Whether to return names only, or all information in a directory listing.
-#' @param src,dest The source and destination filenames for uploading and downloading. Paths are allowed.
+#' @param src,dest The source and destination files for uploading and downloading. For uploading, `src` can also be a [textConnection] or [rawConnection] object to allow transferring in-memory R objects without creating a temporary file.
 #' @param confirm Whether to ask for confirmation on deleting a file or directory.
 #' @param blocksize The number of bytes to upload per HTTP(S) request.
 #' @param overwrite When downloading, whether to overwrite an existing destination file.
+#' @param use_azcopy Whether to use the AzCopy utility from Microsoft to do the transfer, rather than doing it in R.
+#' @param max_concurrent_transfers For `multiupload_azure_file` and `multidownload_azure_file`, the maximum number of concurrent file transfers. Each concurrent file transfer requires a separate R process, so limit this if you are low on memory.
 #' @param prefix For `list_azure_files`, filters the result to return only files and directories whose name begins with this prefix.
+#'
+#' @details
+#' `upload_azure_file` and `download_azure_file` are the workhorse file transfer functions for file storage. They each take as inputs a _single_ filename or connection as the source for uploading/downloading, and a single filename as the destination.
+#'
+#' `multiupload_azure_file` and `multidownload_azure_file` are functions for uploading and downloading _multiple_ files at once. They parallelise file transfers by deploying a pool of R processes in the background, which can lead to significantly greater efficiency when transferring many small files. They take as input a _wildcard_ pattern as the source, which expands to one or more files. The `dest` argument should be a directory.
+#'
+#' The file transfer functions also support working with connections to allow transferring R objects without creating temporary files. For uploading, `src` can be a [textConnection] or [rawConnection] object. For downloading, `dest` can be NULL or a `rawConnection` object. In the former case, the downloaded data is returned as a raw vector, and for the latter, it will be placed into the connection. See the examples below.
 #'
 #' @return
 #' For `list_azure_files`, if `info="name"`, a vector of file/directory names. If `info="all"`, a data frame giving the file size and whether each object is a file or directory.
 #'
+#' For `download_azure_file`, if `dest=NULL`, the contents of the downloaded file as a raw vector.
+#'
 #' @seealso
-#' [file_share], [az_storage]
+#' [file_share], [az_storage], [storage_download], [call_azcopy]
+#'
+#' [AzCopy version 10 on GitHub](https://github.com/Azure/azure-storage-azcopy)
 #'
 #' @examples
 #' \dontrun{
@@ -212,6 +226,7 @@ delete_file_share.file_endpoint <- function(endpoint, name, confirm=TRUE, ...)
 #' share <- file_share("https://mystorage.file.core.windows.net/myshare", key="access_key")
 #'
 #' list_azure_files(share, "/")
+#' list_azure_files(share, "/", recursive=TRUE)
 #'
 #' create_azure_dir(share, "/newdir")
 #'
@@ -220,6 +235,27 @@ delete_file_share.file_endpoint <- function(endpoint, name, confirm=TRUE, ...)
 #'
 #' delete_azure_file(share, "/newdir/bigfile.zip")
 #' delete_azure_dir(share, "/newdir")
+#'
+#' # uploading/downloading multiple files at once
+#' multiupload_azure_file(share, "/data/logfiles/*.zip")
+#' multidownload_azure_file(share, "/monthly/jan*.*", "/data/january")
+#'
+#' # uploading serialized R objects via connections
+#' json <- jsonlite::toJSON(iris, pretty=TRUE, auto_unbox=TRUE)
+#' con <- textConnection(json)
+#' upload_azure_file(share, con, "iris.json")
+#'
+#' rds <- serialize(iris, NULL)
+#' con <- rawConnection(rds)
+#' upload_azure_file(share, con, "iris.rds")
+#'
+#' # downloading files into memory: as a raw vector, and via a connection
+#' rawvec <- download_azure_file(share, "iris.json", NULL)
+#' rawToChar(rawvec)
+#'
+#' con <- rawConnection(raw(0), "r+")
+#' download_azure_file(share, "iris.rds", con)
+#' unserialize(con)
 #'
 #' }
 #' @rdname file
@@ -241,7 +277,8 @@ list_azure_files <- function(share, dir, info=c("all", "name"),
  
     type <- if(is_empty(name)) character(0) else names(name)
     size <- vapply(lst$Entries,
-                   function(ent) if(is_empty(ent$Properties)) NA_character_ else ent$Properties$`Content-Length`[[1]],
+                   function(ent) if(is_empty(ent$Properties)) NA_character_
+                                 else ent$Properties$`Content-Length`[[1]],
                    FUN.VALUE=character(1))
 
     data.frame(name=name, type=type, size=as.numeric(size), stringsAsFactors=FALSE)
@@ -249,62 +286,44 @@ list_azure_files <- function(share, dir, info=c("all", "name"),
 
 #' @rdname file
 #' @export
-upload_azure_file <- function(share, src, dest, blocksize=2^24)
+upload_azure_file <- function(share, src, dest, blocksize=2^22, use_azcopy=FALSE)
 {
-    if(inherits(src, "textConnection"))
-    {
-        src <- charToRaw(paste0(readLines(src), collapse="\n"))
-        nbytes <- length(src)
-        con <- rawConnection(src)
-    }
-    else
-    {
-        con <- file(src, open="rb")
-        nbytes <- file.info(src)$size
-    }
-    on.exit(close(con))
-
-    # first, create the file
-    # ensure content-length is never exponential notation
-    headers <- list("x-ms-type"="file",
-                    "x-ms-content-length"=sprintf("%.0f", nbytes))
-    do_container_op(share, dest, headers=headers, http_verb="PUT")
-
-    # then write the bytes into it, one block at a time
-    options <- list(comp="range")
-    headers <- list("x-ms-write"="Update")
-
-    # upload each block
-    blocklist <- list()
-    range_begin <- 0
-    while(range_begin < nbytes)
-    {
-        body <- readBin(con, "raw", blocksize)
-        thisblock <- length(body)
-        if(thisblock == 0)  # sanity check
-            break
-
-        # ensure content-length is never exponential notation
-        headers[["content-length"]] <- sprintf("%.0f", thisblock)
-        headers[["range"]] <- sprintf("bytes=%s-%s", range_begin, range_begin + thisblock - 1)
-
-        do_container_op(share, dest, headers=headers, body=body, options=options, http_verb="PUT")
-
-        range_begin <- range_begin + thisblock
-    }
-
-    # set content type
-    do_container_op(share, dest, headers=list("x-ms-content-type"=mime::guess_type(src)),
-                    options=list(comp="properties"),
-                    http_verb="PUT")
-    invisible(NULL)
+    if(use_azcopy)
+        azcopy_upload(share, src, dest, blocksize=blocksize)
+    else upload_azure_file_internal(share, src, dest, blocksize=blocksize)
 }
 
 #' @rdname file
 #' @export
-download_azure_file <- function(share, src, dest, overwrite=FALSE)
+multiupload_azure_file <- function(share, src, dest, blocksize=2^22,
+                                   use_azcopy=FALSE,
+                                   max_concurrent_transfers=10)
 {
-    do_container_op(share, src, config=httr::write_disk(dest, overwrite))
+    if(use_azcopy)
+        azcopy_upload(share, src, dest, blocksize=blocksize)
+    else multiupload_azure_file_internal(share, src, dest, blocksize=blocksize,
+                                         max_concurrent_transfers=max_concurrent_transfers)
+}
+
+#' @rdname file
+#' @export
+download_azure_file <- function(share, src, dest, overwrite=FALSE, use_azcopy=FALSE)
+{
+    if(use_azcopy)
+        azcopy_download(share, src, dest, overwrite=overwrite)
+    else download_azure_file_internal(share, src, dest, overwrite=overwrite)
+}
+
+#' @rdname file
+#' @export
+multidownload_azure_file <- function(share, src, dest, overwrite=FALSE,
+                                     use_azcopy=FALSE,
+                                     max_concurrent_transfers=10)
+{
+    if(use_azcopy)
+        azcopy_download(share, src, dest, overwrite=overwrite)
+    else multidownload_azure_file_internal(share, src, dest, overwrite=overwrite,
+                                           max_concurrent_transfers=max_concurrent_transfers)
 }
 
 #' @rdname file
