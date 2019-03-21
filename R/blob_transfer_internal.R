@@ -50,6 +50,7 @@ upload_blob_internal <- function(container, src, dest, type="BlockBlob", blocksi
 
     # upload each block
     blocklist <- list()
+    base_id <- openssl::md5(dest)
     i <- 1
     while(1)
     {
@@ -60,7 +61,7 @@ upload_blob_internal <- function(container, src, dest, type="BlockBlob", blocksi
 
         # ensure content-length is never exponential notation
         headers[["content-length"]] <- sprintf("%.0f", thisblock)
-        id <- openssl::base64_encode(sprintf("%s-%010d", dest, i))
+        id <- openssl::base64_encode(sprintf("%s-%010d", base_id, i))
         opts <- list(comp="block", blockid=id)
 
         do_container_op(container, dest, headers=headers, body=body, options=opts, http_verb="PUT")
@@ -116,11 +117,12 @@ download_blob_internal <- function(container, src, dest, overwrite=FALSE, lease=
         headers[["x-ms-lease-id"]] <- as.character(lease)
     
     if(is.character(dest))
-        return(do_container_op(container, src, headers=headers, config=httr::write_disk(dest, overwrite)))
+        return(do_container_op(container, src, headers=headers, config=httr::write_disk(dest, overwrite),
+               progress="down"))
     
     # if dest is NULL or a raw connection, return the transferred data in memory as raw bytes
-    cont <- httr::content(do_container_op(container, src, headers=headers, http_status_handler="pass"),
-                          as="raw")
+    cont <- httr::content(do_container_op(container, src, headers=headers, http_status_handler="pass",
+                          as="raw", progress="down"))
     if(is.null(dest))
         return(cont)
 
