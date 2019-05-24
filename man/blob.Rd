@@ -19,11 +19,12 @@ multiupload_blob(container, src, dest, type = "BlockBlob",
   blocksize = 2^24, lease = NULL, use_azcopy = FALSE,
   max_concurrent_transfers = 10)
 
-download_blob(container, src, dest, overwrite = FALSE, lease = NULL,
-  use_azcopy = FALSE)
+download_blob(container, src, dest, blocksize = 2^24,
+  overwrite = FALSE, lease = NULL, use_azcopy = FALSE)
 
-multidownload_blob(container, src, dest, overwrite = FALSE,
-  lease = NULL, use_azcopy = FALSE, max_concurrent_transfers = 10)
+multidownload_blob(container, src, dest, blocksize = 2^24,
+  overwrite = FALSE, lease = NULL, use_azcopy = FALSE,
+  max_concurrent_transfers = 10)
 
 delete_blob(container, blob, confirm = TRUE)
 }
@@ -38,7 +39,7 @@ delete_blob(container, blob, confirm = TRUE)
 
 \item{type}{When uploading, the type of blob to create. Currently only block blobs are supported.}
 
-\item{blocksize}{The number of bytes to upload per HTTP(S) request.}
+\item{blocksize}{The number of bytes to upload/download per HTTP(S) request.}
 
 \item{lease}{The lease for a blob, if present.}
 
@@ -65,7 +66,7 @@ Upload, download, or delete a blob; list blobs in a container.
 
 The file transfer functions also support working with connections to allow transferring R objects without creating temporary files. For uploading, \code{src} can be a \link{textConnection} or \link{rawConnection} object. For downloading, \code{dest} can be NULL or a \code{rawConnection} object. In the former case, the downloaded data is returned as a raw vector, and for the latter, it will be placed into the connection. See the examples below.
 
-By default, \code{download_blob} will display a progress bar as it is downloading. To turn this off, use \code{options(azure_dl_progress_bar=FALSE)}. To turn the progress bar back on, use \code{options(azure_dl_progress_bar=TRUE)}.
+By default, the upload and download functions will display a progress bar to track the file transfer. To turn this off, use \code{options(azure_storage_progress_bar=FALSE)}. To turn the progress bar back on, use \code{options(azure_storage_progress_bar=TRUE)}.
 }
 \examples{
 \dontrun{

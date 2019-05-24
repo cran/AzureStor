@@ -35,12 +35,19 @@ do_storage_call <- function(endpoint_url, path, options=list(), headers=list(), 
         url <- add_sas(sas, url)
 
     headers <- do.call(httr::add_headers, headers)
-    verb <- get(verb, getNamespace("httr"))
-
-    # do actual http[s] call
-    response <- if(!is.null(progress) && isTRUE(getOption("azure_dl_progress_bar")))
-        verb(url, headers, body=body, ..., httr::progress(progress))
-    else verb(url, headers, body=body, ...)
+    retries <- as.numeric(getOption("azure_storage_retries"))
+    r <- 0
+    repeat
+    {
+        r <- r + 1
+        # retry on curl errors, not on httr errors
+        response <- tryCatch(httr::VERB(verb, url, headers, body=body, progress, ...), error=function(e) e)
+        if(retry_transfer(response) && r <= retries)
+            message("Connection error, retrying (", r, " of ", retries, ")")
+        else break
+    }
+    if(inherits(response, "error"))
+        stop(response)
 
     handler <- match.arg(http_status_handler)
     if(handler != "pass")
@@ -209,3 +216,15 @@ xml_to_list <- function(x)
         xml2::as_list(x)
     else (xml2::as_list(x))[[1]]
 }
+
+
+# check whether to retry a failed file transfer
+# retry on curl error (not any other kind of error)
+# don't retry on host not found
+retry_transfer <- function(res)
+{
+    inherits(res, "error") &&
+        grepl("curl", deparse(res$call[[1]]), fixed=TRUE) &&
+        !grepl("Could not resolve host", res$message, fixed=TRUE)
+}
+

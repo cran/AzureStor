@@ -15,7 +15,7 @@
 #'
 #' If authenticating via AAD, you can supply the token either as a string, or as an object of class AzureToken, created via [AzureRMR::get_azure_token]. The latter is the recommended way of doing it, as it allows for automatic refreshing of expired tokens.
 #'
-#' Currently (as of February 2019), if hierarchical namespaces are enabled on a storage account, the blob API for the account is disabled. The blob endpoint is still accessible, but blob operations on the endpoint will fail. Full interoperability between blobs and ADLSgen2 is planned for later in 2019.
+#' Currently (as of May 2019), if hierarchical namespaces are enabled on a storage account, the blob API for the account is disabled. The blob endpoint is still accessible, but blob operations on the endpoint will fail. Full interoperability between blobs and ADLSgen2 is planned for later in 2019.
 #'
 #' @return
 #' For `adls_filesystem` and `create_adls_filesystem`, an S3 object representing an existing or created filesystem respectively.
@@ -211,7 +211,7 @@ delete_adls_filesystem.adls_endpoint <- function(endpoint, name, confirm=TRUE, .
 #' @param info Whether to return names only, or all information in a directory listing.
 #' @param src,dest The source and destination files for uploading and downloading. Paths are allowed. For uploading, `src` can also be a [textConnection] or [rawConnection] object to allow transferring in-memory R objects without creating a temporary file.
 #' @param confirm Whether to ask for confirmation on deleting a file or directory.
-#' @param blocksize The number of bytes to upload per HTTP(S) request.
+#' @param blocksize The number of bytes to upload/download per HTTP(S) request.
 #' @param lease The lease for a file, if present.
 #' @param overwrite When downloading, whether to overwrite an existing destination file.
 #' @param use_azcopy Whether to use the AzCopy utility from Microsoft to do the transfer, rather than doing it in R.
@@ -225,7 +225,7 @@ delete_adls_filesystem.adls_endpoint <- function(endpoint, name, confirm=TRUE, .
 #'
 #' The file transfer functions also support working with connections to allow transferring R objects without creating temporary files. For uploading, `src` can be a [textConnection] or [rawConnection] object. For downloading, `dest` can be NULL or a `rawConnection` object. In the former case, the downloaded data is returned as a raw vector, and for the latter, it will be placed into the connection. See the examples below.
 #'
-#' By default, `download_adls_file` will display a progress bar as it is downloading. To turn this off, use `options(azure_dl_progress_bar=FALSE)`. To turn the progress bar back on, use `options(azure_dl_progress_bar=TRUE)`.
+#' By default, the upload and download functions will display a progress bar to track the file transfer. To turn this off, use `options(azure_storage_progress_bar=FALSE)`. To turn the progress bar back on, use `options(azure_storage_progress_bar=TRUE)`.
 #'
 #' @return
 #' For `list_adls_files`, if `info="name"`, a vector of file/directory names. If `info="all"`, a data frame giving the file size and whether each object is a file or directory.
@@ -346,24 +346,24 @@ upload_adls_file <- function(filesystem, src, dest, blocksize=2^24, lease=NULL, 
 
 #' @rdname adls
 #' @export
-multidownload_adls_file <- function(filesystem, src, dest, overwrite=FALSE,
+multidownload_adls_file <- function(filesystem, src, dest, blocksize=2^24, overwrite=FALSE,
                                     use_azcopy=FALSE,
                                     max_concurrent_transfers=10)
 {
     if(use_azcopy)
         azcopy_upload(filesystem, src, dest, overwrite=overwrite)
-    else multidownload_adls_file_internal(filesystem, src, dest, overwrite=overwrite,
+    else multidownload_adls_file_internal(filesystem, src, dest, blocksize=blocksize, overwrite=overwrite,
                                           max_concurrent_transfers=max_concurrent_transfers)
 }
 
 
 #' @rdname adls
 #' @export
-download_adls_file <- function(filesystem, src, dest, overwrite=FALSE, use_azcopy=FALSE)
+download_adls_file <- function(filesystem, src, dest, blocksize=2^24, overwrite=FALSE, use_azcopy=FALSE)
 {
     if(use_azcopy)
         azcopy_download(filesystem, src, dest, overwrite=overwrite)
-    else download_adls_file_internal(filesystem, src, dest, overwrite=overwrite)
+    else download_adls_file_internal(filesystem, src, dest, blocksize=blocksize, overwrite=overwrite)
 }
 
 

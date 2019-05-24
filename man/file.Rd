@@ -19,11 +19,12 @@ upload_azure_file(share, src, dest, blocksize = 2^22,
 multiupload_azure_file(share, src, dest, blocksize = 2^22,
   use_azcopy = FALSE, max_concurrent_transfers = 10)
 
-download_azure_file(share, src, dest, overwrite = FALSE,
-  use_azcopy = FALSE)
+download_azure_file(share, src, dest, blocksize = 2^22,
+  overwrite = FALSE, use_azcopy = FALSE)
 
-multidownload_azure_file(share, src, dest, overwrite = FALSE,
-  use_azcopy = FALSE, max_concurrent_transfers = 10)
+multidownload_azure_file(share, src, dest, blocksize = 2^22,
+  overwrite = FALSE, use_azcopy = FALSE,
+  max_concurrent_transfers = 10)
 
 delete_azure_file(share, file, confirm = TRUE)
 
@@ -42,7 +43,7 @@ delete_azure_dir(share, dir, confirm = TRUE)
 
 \item{src, dest}{The source and destination files for uploading and downloading. For uploading, \code{src} can also be a \link{textConnection} or \link{rawConnection} object to allow transferring in-memory R objects without creating a temporary file.}
 
-\item{blocksize}{The number of bytes to upload per HTTP(S) request.}
+\item{blocksize}{The number of bytes to upload/download per HTTP(S) request.}
 
 \item{use_azcopy}{Whether to use the AzCopy utility from Microsoft to do the transfer, rather than doing it in R.}
 
@@ -67,7 +68,7 @@ Upload, download, or delete a file; list files in a directory; create or delete 
 
 The file transfer functions also support working with connections to allow transferring R objects without creating temporary files. For uploading, \code{src} can be a \link{textConnection} or \link{rawConnection} object. For downloading, \code{dest} can be NULL or a \code{rawConnection} object. In the former case, the downloaded data is returned as a raw vector, and for the latter, it will be placed into the connection. See the examples below.
 
-By default, \code{download_azure_file} will display a progress bar as it is downloading. To turn this off, use \code{options(azure_dl_progress_bar=FALSE)}. To turn the progress bar back on, use \code{options(azure_dl_progress_bar=TRUE)}.
+By default, the upload and download functions will display a progress bar to track the file transfer. To turn this off, use \code{options(azure_storage_progress_bar=FALSE)}. To turn the progress bar back on, use \code{options(azure_storage_progress_bar=TRUE)}.
 }
 \examples{
 \dontrun{

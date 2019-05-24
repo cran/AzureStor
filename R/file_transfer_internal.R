@@ -25,54 +25,27 @@ multiupload_azure_file_internal <- function(share, src, dest, blocksize=2^22, ma
 
 upload_azure_file_internal <- function(share, src, dest, blocksize=2^22)
 {
-    # set content type
-    content_type <- if(inherits(src, "connection"))
-        "application/octet-stream"
-    else mime::guess_type(src)
-
-    if(inherits(src, "textConnection"))
-    {
-        src <- charToRaw(paste0(readLines(src), collapse="\n"))
-        nbytes <- length(src)
-        con <- rawConnection(src)
-    }
-    else if(inherits(src, "rawConnection"))
-    {
-        con <- src
-        # need to read the data to get object size (!)
-        nbytes <- 0
-        repeat
-        {
-            x <- readBin(con, "raw", n=blocksize)
-            if(length(x) == 0)
-                break
-            nbytes <- nbytes + length(x)
-        }
-        seek(con, 0) # reposition connection after reading
-    }
-    else
-    {
-        con <- file(src, open="rb")
-        nbytes <- file.info(src)$size
-    }
-    on.exit(close(con))
+    src <- normalize_src(src)
+    on.exit(close(src$con))
 
     # first, create the file
     # ensure content-length is never exponential notation
     headers <- list("x-ms-type"="file",
-                    "x-ms-content-length"=sprintf("%.0f", nbytes))
+                    "x-ms-content-length"=sprintf("%.0f", src$size))
     do_container_op(share, dest, headers=headers, http_verb="PUT")
 
     # then write the bytes into it, one block at a time
     options <- list(comp="range")
     headers <- list("x-ms-write"="Update")
 
+    bar <- storage_progress_bar$new(src$size, "up")
+
     # upload each block
     blocklist <- list()
     range_begin <- 0
-    while(range_begin < nbytes)
+    while(range_begin < src$size)
     {
-        body <- readBin(con, "raw", blocksize)
+        body <- readBin(src$con, "raw", blocksize)
         thisblock <- length(body)
         if(thisblock == 0)  # sanity check
             break
@@ -81,19 +54,24 @@ upload_azure_file_internal <- function(share, src, dest, blocksize=2^22)
         headers[["content-length"]] <- sprintf("%.0f", thisblock)
         headers[["range"]] <- sprintf("bytes=%.0f-%.0f", range_begin, range_begin + thisblock - 1)
 
-        do_container_op(share, dest, headers=headers, body=body, options=options, http_verb="PUT")
+        do_container_op(share, dest, headers=headers, body=body, options=options, progress=bar$update(),
+                        http_verb="PUT")
 
+        bar$offset <- bar$offset + blocksize
         range_begin <- range_begin + thisblock
     }
 
-    do_container_op(share, dest, headers=list("x-ms-content-type"=content_type),
+    bar$close()
+
+    do_container_op(share, dest, headers=list("x-ms-content-type"=src$content_type),
                     options=list(comp="properties"),
                     http_verb="PUT")
     invisible(NULL)
 }
 
 
-multidownload_azure_file_internal <- function(share, src, dest, overwrite=FALSE, max_concurrent_transfers=10)
+multidownload_azure_file_internal <- function(share, src, dest, blocksize=2^22, overwrite=FALSE,
+                                              max_concurrent_transfers=10)
 {
     src_files <- glob2rx(basename(src))
     src_dir <- dirname(src)
@@ -106,7 +84,7 @@ multidownload_azure_file_internal <- function(share, src, dest, overwrite=FALSE,
     if(length(src) == 0)
         stop("No files to transfer", call.=FALSE)
     if(length(src) == 1)
-        return(download_azure_file(share, src, dest, overwrite=overwrite))
+        return(download_azure_file(share, src, dest, blocksize=blocksize, overwrite=overwrite))
 
     init_pool(max_concurrent_transfers)
 
@@ -116,28 +94,56 @@ multidownload_azure_file_internal <- function(share, src, dest, overwrite=FALSE,
     parallel::parLapply(.AzureStor$pool, src, function(f)
     {
         dest <- file.path(dest, basename(f))
-        AzureStor::download_azure_file(share, f, dest, overwrite=overwrite)
+        AzureStor::download_azure_file(share, f, dest, blocksize=blocksize, overwrite=overwrite)
     })
     invisible(NULL)
 }
 
 
-download_azure_file_internal <- function(share, src, dest, overwrite=FALSE)
+download_azure_file_internal <- function(share, src, dest, blocksize=2^22, overwrite=FALSE)
 {
-    if(is.character(dest))
-        return(do_container_op(share, src, config=httr::write_disk(dest, overwrite), progress="down"))
+    file_dest <- is.character(dest)
+    null_dest <- is.null(dest)
+    conn_dest <- inherits(dest, "rawConnection")
 
-    # if dest is NULL or a raw connection, return the transferred data in memory as raw bytes
-    cont <- httr::content(do_container_op(share, src, http_status_handler="pass",
-                          as="raw", progress="down"))
-    if(is.null(dest))
-        return(cont)
+    if(!file_dest && !null_dest && !conn_dest)
+        stop("Unrecognised dest argument", call.=FALSE)
 
-    if(inherits(dest, "rawConnection"))
+    headers <- list()
+    if(file_dest)
     {
-        writeBin(cont, dest)
-        seek(dest, 0)
-        invisible(NULL)
+        if(!overwrite && file.exists(dest))
+            stop("Destination file exists and overwrite is FALSE", call.=FALSE)
+        dest <- file(dest, "w+b")
+        on.exit(close(dest))
     }
-    else stop("Unrecognised dest argument", call.=FALSE)
+    if(null_dest)
+    {
+        dest <- rawConnection(raw(0), "w+b")
+        on.exit(seek(dest, 0))
+    }
+    if(conn_dest)
+        on.exit(seek(dest, 0))
+        
+    # get file size (for progress bar)
+    res <- do_container_op(share, src, headers=headers, http_verb="HEAD", http_status_handler="pass")
+    httr::stop_for_status(res, storage_error_message(res))
+    size <- as.numeric(httr::headers(res)[["Content-Length"]])
+
+    bar <- storage_progress_bar$new(size, "down")
+    offset <- 0
+
+    while(offset < size)
+    {
+        headers$Range <- sprintf("bytes=%.0f-%.0f", offset, offset + blocksize - 1)
+        res <- do_container_op(share, src, headers=headers, progress=bar$update(), http_status_handler="pass")
+        httr::stop_for_status(res, storage_error_message(res))
+        writeBin(httr::content(res, as="raw"), dest)
+
+        offset <- offset + blocksize
+        bar$offset <- offset
+    }
+
+    bar$close()
+    if(null_dest) dest else invisible(NULL)
 }

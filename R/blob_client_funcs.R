@@ -17,7 +17,7 @@
 #'
 #' If authenticating via AAD, you can supply the token either as a string, or as an object of class AzureToken, created via [AzureRMR::get_azure_token]. The latter is the recommended way of doing it, as it allows for automatic refreshing of expired tokens.
 #'
-#' Currently (as of February 2019), if hierarchical namespaces are enabled on a storage account, the blob API for the account is disabled. The blob endpoint is still accessible, but blob operations on the endpoint will fail. Full interoperability between blobs and ADLSgen2 is planned for later in 2019.
+#' Currently (as of May 2019), if hierarchical namespaces are enabled on a storage account, the blob API for the account is disabled. The blob endpoint is still accessible, but blob operations on the endpoint will fail. Full interoperability between blobs and ADLSgen2 is planned for later in 2019.
 #'
 #' @return
 #' For `blob_container` and `create_blob_container`, an S3 object representing an existing or created container respectively.
@@ -228,7 +228,7 @@ delete_blob_container.blob_endpoint <- function(endpoint, name, confirm=TRUE, le
 #' @param src,dest The source and destination files for uploading and downloading. See 'Details' below.For uploading, `src` can also be a [textConnection] or [rawConnection] object to allow transferring in-memory R objects without creating a temporary file. For downloading, 
 #' @param info For `list_blobs`, level of detail about each blob to return: a vector of names only; the name, size and last-modified date (default); or all information.
 #' @param confirm Whether to ask for confirmation on deleting a blob.
-#' @param blocksize The number of bytes to upload per HTTP(S) request.
+#' @param blocksize The number of bytes to upload/download per HTTP(S) request.
 #' @param lease The lease for a blob, if present.
 #' @param type When uploading, the type of blob to create. Currently only block blobs are supported.
 #' @param overwrite When downloading, whether to overwrite an existing destination file.
@@ -243,7 +243,7 @@ delete_blob_container.blob_endpoint <- function(endpoint, name, confirm=TRUE, le
 #'
 #' The file transfer functions also support working with connections to allow transferring R objects without creating temporary files. For uploading, `src` can be a [textConnection] or [rawConnection] object. For downloading, `dest` can be NULL or a `rawConnection` object. In the former case, the downloaded data is returned as a raw vector, and for the latter, it will be placed into the connection. See the examples below.
 #'
-#' By default, `download_blob` will display a progress bar as it is downloading. To turn this off, use `options(azure_dl_progress_bar=FALSE)`. To turn the progress bar back on, use `options(azure_dl_progress_bar=TRUE)`.
+#' By default, the upload and download functions will display a progress bar to track the file transfer. To turn this off, use `options(azure_storage_progress_bar=FALSE)`. To turn the progress bar back on, use `options(azure_storage_progress_bar=TRUE)`.
 #'
 #' @return
 #' For `list_blobs`, details on the blobs in the container. For `download_blob`, if `dest=NULL`, the contents of the downloaded blob as a raw vector.
@@ -355,22 +355,23 @@ multiupload_blob <- function(container, src, dest, type="BlockBlob", blocksize=2
 
 #' @rdname blob
 #' @export
-download_blob <- function(container, src, dest, overwrite=FALSE, lease=NULL, use_azcopy=FALSE)
+download_blob <- function(container, src, dest, blocksize=2^24, overwrite=FALSE, lease=NULL,
+                          use_azcopy=FALSE)
 {
     if(use_azcopy)
         azcopy_download(container, src, dest, overwrite=overwrite, lease=lease)
-    else download_blob_internal(container, src, dest, overwrite=overwrite, lease=lease)
+    else download_blob_internal(container, src, dest, blocksize=blocksize, overwrite=overwrite, lease=lease)
 }
 
 #' @rdname blob
 #' @export
-multidownload_blob <- function(container, src, dest, overwrite=FALSE, lease=NULL,
+multidownload_blob <- function(container, src, dest, blocksize=2^24, overwrite=FALSE, lease=NULL,
                                use_azcopy=FALSE,
                                max_concurrent_transfers=10)
 {
     if(use_azcopy)
         azcopy_download(container, src, dest, overwrite=overwrite, lease=lease)
-    else multidownload_blob_internal(container, src, dest, overwrite=overwrite, lease=lease,
+    else multidownload_blob_internal(container, src, dest, blocksize=blocksize, overwrite=overwrite, lease=lease,
                                      max_concurrent_transfers=max_concurrent_transfers)
 }
 

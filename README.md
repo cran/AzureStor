@@ -2,9 +2,9 @@
 
 [![CRAN](https://www.r-pkg.org/badges/version/AzureStor)](https://cran.r-project.org/package=AzureStor)
 ![Downloads](https://cranlogs.r-pkg.org/badges/AzureStor)
-[![Travis Build Status](https://travis-ci.org/cloudyr/AzureStor.png?branch=master)](https://travis-ci.org/cloudyr/AzureStor)
+[![Travis Build Status](https://travis-ci.org/Azure/AzureStor.png?branch=master)](https://travis-ci.org/Azure/AzureStor)
 
-This package implements both an admin- and client-side interface to [Azure Storage Services](https://docs.microsoft.com/en-us/rest/api/storageservices/). The admin interface uses R6 classes and extends the framework provided by [AzureRMR](https://github.com/hong-revo/AzureRMR). The client interface provides several S3 methods for efficiently managing storage and performing file transfers.
+This package implements both an admin- and client-side interface to [Azure Storage Services](https://docs.microsoft.com/en-us/rest/api/storageservices/). The admin interface uses R6 classes and extends the framework provided by [AzureRMR](https://github.com/Azure/AzureRMR). The client interface provides several S3 methods for efficiently managing storage and performing file transfers.
 
 ## Storage endpoints
 
@@ -24,7 +24,7 @@ fl_endp_sas <- storage_endpoint("https://mystorage.file.core.windows.net", sas="
 ad_endp_tok <- storage_endpoint("https://mystorage.dfs.core.windows.net", token="my_token")
 
 # alternative (recommended) way of supplying an AAD token
-token <- AzureRMR::get_azure_token("https://mystorage.dfs.core.windows.net",
+token <- AzureRMR::get_azure_token("https://storage.azure.com",
                                    tenant="myaadtenant", app="app_id", password="mypassword"))
 ad_endp_tok2 <- storage_endpoint("https://mystorage.dfs.core.windows.net", token=token)
 ```

@@ -1,6 +1,12 @@
+# AzureStor 2.0.2
+
+- By default, HTTP(S) requests to the storage endpoint will now be retried on encountering a network error. To change the number of retries, call `options(azure_storage_retries=N)` where N >= 0. Setting this option to zero disables retrying.
+- Downloading now proceeds in blocks, much like uploading. The default block size is set to 16MB for blob and ADLSgen2, and 4MB for file storage. While this reduces the throughput slightly (basically there is at least one extra REST call involved), it allows retrying a failed transfer on a per-block basis rather than having to redownload the entire file.
+- Also display the progress bar for uploads. The command to enable/disable the progress bar is now `options(azure_storage_progress_bar=TRUE|FALSE)`.
+
 # AzureStor 2.0.1
 
-- Display a progress bar when downloading single files. To turn this on or off, call `options(azuure_dl_progress_bar=TRUE|FALSE)`.
+- Display a progress bar when downloading single files. To turn this on or off, call `options(azure_dl_progress_bar=TRUE|FALSE)`.
 - Fix `upload_to_url`/`download_from_url` bugs introduced in last update.
 
 # AzureStor 2.0.0

@@ -197,7 +197,7 @@ delete_file_share.file_endpoint <- function(endpoint, name, confirm=TRUE, ...)
 #' @param info Whether to return names only, or all information in a directory listing.
 #' @param src,dest The source and destination files for uploading and downloading. For uploading, `src` can also be a [textConnection] or [rawConnection] object to allow transferring in-memory R objects without creating a temporary file.
 #' @param confirm Whether to ask for confirmation on deleting a file or directory.
-#' @param blocksize The number of bytes to upload per HTTP(S) request.
+#' @param blocksize The number of bytes to upload/download per HTTP(S) request.
 #' @param overwrite When downloading, whether to overwrite an existing destination file.
 #' @param use_azcopy Whether to use the AzCopy utility from Microsoft to do the transfer, rather than doing it in R.
 #' @param max_concurrent_transfers For `multiupload_azure_file` and `multidownload_azure_file`, the maximum number of concurrent file transfers. Each concurrent file transfer requires a separate R process, so limit this if you are low on memory.
@@ -210,7 +210,7 @@ delete_file_share.file_endpoint <- function(endpoint, name, confirm=TRUE, ...)
 #'
 #' The file transfer functions also support working with connections to allow transferring R objects without creating temporary files. For uploading, `src` can be a [textConnection] or [rawConnection] object. For downloading, `dest` can be NULL or a `rawConnection` object. In the former case, the downloaded data is returned as a raw vector, and for the latter, it will be placed into the connection. See the examples below.
 #'
-#' By default, `download_azure_file` will display a progress bar as it is downloading. To turn this off, use `options(azure_dl_progress_bar=FALSE)`. To turn the progress bar back on, use `options(azure_dl_progress_bar=TRUE)`.
+#' By default, the upload and download functions will display a progress bar to track the file transfer. To turn this off, use `options(azure_storage_progress_bar=FALSE)`. To turn the progress bar back on, use `options(azure_storage_progress_bar=TRUE)`.
 #'
 #' @return
 #' For `list_azure_files`, if `info="name"`, a vector of file/directory names. If `info="all"`, a data frame giving the file size and whether each object is a file or directory.
@@ -309,22 +309,22 @@ multiupload_azure_file <- function(share, src, dest, blocksize=2^22,
 
 #' @rdname file
 #' @export
-download_azure_file <- function(share, src, dest, overwrite=FALSE, use_azcopy=FALSE)
+download_azure_file <- function(share, src, dest, blocksize=2^22, overwrite=FALSE, use_azcopy=FALSE)
 {
     if(use_azcopy)
         azcopy_download(share, src, dest, overwrite=overwrite)
-    else download_azure_file_internal(share, src, dest, overwrite=overwrite)
+    else download_azure_file_internal(share, src, dest, blocksize=blocksize, overwrite=overwrite)
 }
 
 #' @rdname file
 #' @export
-multidownload_azure_file <- function(share, src, dest, overwrite=FALSE,
+multidownload_azure_file <- function(share, src, dest, blocksize=2^22, overwrite=FALSE,
                                      use_azcopy=FALSE,
                                      max_concurrent_transfers=10)
 {
     if(use_azcopy)
         azcopy_download(share, src, dest, overwrite=overwrite)
-    else multidownload_azure_file_internal(share, src, dest, overwrite=overwrite,
+    else multidownload_azure_file_internal(share, src, dest, blocksize=blocksize, overwrite=overwrite,
                                            max_concurrent_transfers=max_concurrent_transfers)
 }
 

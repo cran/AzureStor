@@ -26,28 +26,23 @@ multiupload_adls_file_internal <- function(filesystem, src, dest, blocksize=2^22
 
 upload_adls_file_internal <- function(filesystem, src, dest, blocksize=2^24, lease=NULL)
 {
-    con <- if(inherits(src, "textConnection"))
-        rawConnection(charToRaw(paste0(readLines(src), collapse="\n")))
-    else if(inherits(src, "rawConnection"))
-        src
-    else file(src, open="rb")
-    on.exit(close(con))
+    src <- normalize_src(src)
+    on.exit(close(src$con))
 
-    # create the file
-    content_type <- if(inherits(src, "connection"))
-        "application/octet-stream"
-    else mime::guess_type(src)
-    headers <- list(`x-ms-content-type`=content_type)
-    #if(!is.null(lease))
-        #headers[["x-ms-lease-id"]] <- as.character(lease)
+    headers <- list(`x-ms-content-type`=src$content_type)
+    if(!is.null(lease))
+        headers[["x-ms-lease-id"]] <- as.character(lease)
+
     do_container_op(filesystem, dest, options=list(resource="file"), headers=headers, http_verb="PUT")
+
+    bar <- storage_progress_bar$new(src$size, "up")
 
     # transfer the contents
     blocklist <- list()
     pos <- 0
-    while(1)
+    repeat
     {
-        body <- readBin(con, "raw", blocksize)
+        body <- readBin(src$con, "raw", blocksize)
         thisblock <- length(body)
         if(thisblock == 0)
             break
@@ -58,9 +53,14 @@ upload_adls_file_internal <- function(filesystem, src, dest, blocksize=2^24, lea
         )
         opts <- list(action="append", position=sprintf("%.0f", pos))
 
-        do_container_op(filesystem, dest, options=opts, headers=headers, body=body, http_verb="PATCH")
+        do_container_op(filesystem, dest, headers=headers, body=body, options=opts, progress=bar$update(),
+                        http_verb="PATCH")
+
+        bar$offset <- bar$offset + blocksize
         pos <- pos + thisblock
     }
+
+    bar$close()
 
     # flush contents
     do_container_op(filesystem, dest,
@@ -69,7 +69,8 @@ upload_adls_file_internal <- function(filesystem, src, dest, blocksize=2^24, lea
 }
 
 
-multidownload_adls_file_internal <- function(filesystem, src, dest, overwrite=FALSE, max_concurrent_transfers=10)
+multidownload_adls_file_internal <- function(filesystem, src, dest, blocksize=2^24, overwrite=FALSE,
+                                             max_concurrent_transfers=10)
 {
     src_dir <- dirname(src)
     if(src_dir == ".")
@@ -81,7 +82,7 @@ multidownload_adls_file_internal <- function(filesystem, src, dest, overwrite=FA
     if(length(src) == 0)
         stop("No files to transfer", call.=FALSE)
     if(length(src) == 1)
-        return(download_adls_file(filesystem, src, dest, overwrite=overwrite))
+        return(download_adls_file(filesystem, src, dest, blocksize=blocksize, overwrite=overwrite))
 
     init_pool(max_concurrent_transfers)
 
@@ -91,28 +92,56 @@ multidownload_adls_file_internal <- function(filesystem, src, dest, overwrite=FA
     parallel::parLapply(.AzureStor$pool, src, function(f)
     {
         dest <- file.path(dest, basename(f))
-        AzureStor::download_adls_file(filesystem, f, dest, overwrite=overwrite)
+        AzureStor::download_adls_file(filesystem, f, dest, blocksize=blocksize, overwrite=overwrite)
     })
     invisible(NULL)
 }
 
 
-download_adls_file_internal <- function(filesystem, src, dest, overwrite=FALSE)
+download_adls_file_internal <- function(filesystem, src, dest, blocksize=2^24, overwrite=FALSE)
 {
-    if(is.character(dest))
-        return(do_container_op(filesystem, src, config=httr::write_disk(dest, overwrite), progress="down"))
+    file_dest <- is.character(dest)
+    null_dest <- is.null(dest)
+    conn_dest <- inherits(dest, "rawConnection")
 
-    # if dest is NULL or a raw connection, return the transferred data in memory as raw bytes
-    cont <- httr::content(do_container_op(filesystem, src, http_status_handler="pass",
-                          as="raw", progress="down"))
-    if(is.null(dest))
-        return(cont)
+    if(!file_dest && !null_dest && !conn_dest)
+        stop("Unrecognised dest argument", call.=FALSE)
 
-    if(inherits(dest, "rawConnection"))
+    headers <- list()
+    if(file_dest)
     {
-        writeBin(cont, dest)
-        seek(dest, 0)
-        invisible(NULL)
+        if(!overwrite && file.exists(dest))
+            stop("Destination file exists and overwrite is FALSE", call.=FALSE)
+        dest <- file(dest, "w+b")
+        on.exit(close(dest))
     }
-    else stop("Unrecognised dest argument", call.=FALSE)
+    if(null_dest)
+    {
+        dest <- rawConnection(raw(0), "w+b")
+        on.exit(seek(dest, 0))
+    }
+    if(conn_dest)
+        on.exit(seek(dest, 0))
+        
+    # get file size (for progress bar)
+    res <- do_container_op(filesystem, src, headers=headers, http_verb="HEAD", http_status_handler="pass")
+    httr::stop_for_status(res, storage_error_message(res))
+    size <- as.numeric(httr::headers(res)[["Content-Length"]])
+
+    bar <- storage_progress_bar$new(size, "down")
+    offset <- 0
+
+    while(offset < size)
+    {
+        headers$Range <- sprintf("bytes=%.0f-%.0f", offset, offset + blocksize - 1)
+        res <- do_container_op(filesystem, src, headers=headers, progress=bar$update(), http_status_handler="pass")
+        httr::stop_for_status(res, storage_error_message(res))
+        writeBin(httr::content(res, as="raw"), dest)
+
+        offset <- offset + blocksize
+        bar$offset <- offset
+    }
+
+    bar$close()
+    if(null_dest) dest else invisible(NULL)
 }
