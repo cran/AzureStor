@@ -1,6 +1,6 @@
 Package: AzureStor
 Title: Storage Management in 'Azure'
-Version: 2.0.2
+Version: 2.1.0
 Authors@R: c(
     person("Hong", "Ooi", , "hongooi@microsoft.com", role = c("aut", "cre")),
     person("Microsoft", role="cph")
@@ -15,9 +15,9 @@ Imports: utils, parallel, R6, httr, mime, openssl, xml2, AzureRMR
 Suggests: knitr, jsonlite, testthat
 RoxygenNote: 6.1.1
 NeedsCompilation: no
-Packaged: 2019-05-24 17:22:44 UTC; hongo
+Packaged: 2019-08-03 10:06:07 UTC; hongo
 Author: Hong Ooi [aut, cre],
   Microsoft [cph]
 Maintainer: Hong Ooi <hongooi@microsoft.com>
 Repository: CRAN
-Date/Publication: 2019-05-24 18:00:03 UTC
+Date/Publication: 2019-08-03 10:30:02 UTC

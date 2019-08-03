@@ -1,3 +1,9 @@
+# AzureStor 2.1.0
+
+- Update client API versions to "2018-11-09".
+- Fix bug with blob uploading using azcopy.
+- Add `copy_url_to_blob` function, for directly copying a HTTP\[S\] URL to blob storage. The corresponding generic is `copy_url_to_storage`, with a method for blob containers (only).
+
 # AzureStor 2.0.2
 
 - By default, HTTP(S) requests to the storage endpoint will now be retried on encountering a network error. To change the number of retries, call `options(azure_storage_retries=N)` where N >= 0. Setting this option to zero disables retrying.
