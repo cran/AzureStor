@@ -2,7 +2,7 @@
 
 [![CRAN](https://www.r-pkg.org/badges/version/AzureStor)](https://cran.r-project.org/package=AzureStor)
 ![Downloads](https://cranlogs.r-pkg.org/badges/AzureStor)
-[![Travis Build Status](https://travis-ci.org/Azure/AzureStor.svg?branch=master)](https://travis-ci.org/Azure/AzureStor)
+[![Build Status](https://asiadatascience.visualstudio.com/AzureR/_apis/build/status/Azure.AzureStor?branchName=master)](https://asiadatascience.visualstudio.com/AzureR/_build/latest?definitionId=3&branchName=master)
 
 This package implements both an admin- and client-side interface to [Azure Storage Services](https://docs.microsoft.com/en-us/rest/api/storageservices/). The admin interface uses R6 classes and extends the framework provided by [AzureRMR](https://github.com/Azure/AzureRMR). The client interface provides several S3 methods for efficiently managing storage and performing file transfers.
 
@@ -13,6 +13,7 @@ The primary repo for this package is at https://github.com/Azure/AzureStor; plea
 The interface for accessing storage is similar across blobs, files and ADLSGen2. You call the `storage_endpoint` function and provide the endpoint URI, along with your authentication credentials. AzureStor will figure out the type of storage from the URI.
 
 AzureStor supports all the different ways you can authenticate with a storage endpoint:
+
 - Blob storage supports authenticating with an access key, shared access signature (SAS), or an Azure Active Directory (AAD) OAuth token;
 - File storage supports access key and SAS;
 - ADLSgen2 supports access key and AAD token.

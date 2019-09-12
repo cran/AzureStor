@@ -175,13 +175,8 @@ delete_file_share.file_share <- function(endpoint, ...)
 #' @export
 delete_file_share.file_endpoint <- function(endpoint, name, confirm=TRUE, ...)
 {
-    if(confirm && interactive())
-    {
-        path <- paste0(endpoint$url, name)
-        yn <- readline(paste0("Are you sure you really want to delete the share '", path, "'? (y/N) "))
-        if(tolower(substr(yn, 1, 1)) != "y")
-            return(invisible(NULL))
-    }
+    if(!delete_confirmed(confirm, paste0(endpoint$url, name), "share"))
+        return(invisible(NULL))
 
     obj <- file_share(endpoint, name)
     do_container_op(obj, options=list(restype="share"), http_verb="DELETE")
@@ -266,19 +261,26 @@ list_azure_files <- function(share, dir, info=c("all", "name"),
                              prefix=NULL)
 {
     info <- match.arg(info)
-
     opts <- list(comp="list", restype="directory")
     if(!is_empty(prefix))
         opts <- c(opts, prefix=as.character(prefix))
 
-    lst <- do_container_op(share, dir, options=opts)
+    out <- NULL
+    repeat
+    {
+        lst <- do_container_op(share, dir, options=opts)
+        out <- c(out, lst$Entries)
+        if(is_empty(lst$NextMarker))
+            break
+        else opts$marker <- lst$NextMarker[[1]]
+    }
 
-    name <- vapply(lst$Entries, function(ent) ent$Name[[1]], FUN.VALUE=character(1))
+    name <- vapply(out, function(ent) ent$Name[[1]], FUN.VALUE=character(1))
     if(info == "name")
         return(name)
 
     type <- if(is_empty(name)) character(0) else names(name)
-    size <- vapply(lst$Entries,
+    size <- vapply(out,
                    function(ent) if(is_empty(ent$Properties)) NA_character_
                                  else ent$Properties$`Content-Length`[[1]],
                    FUN.VALUE=character(1))
@@ -332,14 +334,9 @@ multidownload_azure_file <- function(share, src, dest, blocksize=2^22, overwrite
 #' @export
 delete_azure_file <- function(share, file, confirm=TRUE)
 {
-    if(confirm && interactive())
-    {
-        endp <- share$endpoint
-        path <- paste0(endp$url, share$name, "/", file)
-        yn <- readline(paste0("Are you sure you really want to delete '", path, "'? (y/N) "))
-        if(tolower(substr(yn, 1, 1)) != "y")
-            return(invisible(NULL))
-    }
+    if(!delete_confirmed(confirm, paste0(share$endpoint$url, share$name, "/", file), "file"))
+        return(invisible(NULL))
+
     do_container_op(share, file, http_verb="DELETE")
 }
 
@@ -354,14 +351,9 @@ create_azure_dir <- function(share, dir)
 #' @export
 delete_azure_dir <- function(share, dir, confirm=TRUE)
 {
-    if(confirm && interactive())
-    {
-        endp <- share$endpoint
-        path <- paste0(endp$url, share$name, "/", dir)
-        yn <- readline(paste0("Are you sure you really want to delete directory '", path, "'? (y/N) "))
-        if(tolower(substr(yn, 1, 1)) != "y")
-            return(invisible(NULL))
-    }
+    if(!delete_confirmed(confirm, paste0(share$endpoint$url, share$name, "/", dir), "directory"))
+        return(invisible(NULL))
+
     do_container_op(share, dir, options=list(restype="directory"), http_verb="DELETE")
 }
 

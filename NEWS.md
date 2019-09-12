@@ -1,3 +1,8 @@
+# AzureStor 2.1.1
+
+- Correctly handle ADLSgen2 and file storage listings with more than 5000 files.
+- Fix a bug in confirmation prompts. On R >= 3.5, prompts will now use `utils::askYesNo`; as a side-effect, Windows users who are using RGUI.exe will see a popup dialog box instead of a message in the terminal.
+
 # AzureStor 2.1.0
 
 - Update client API versions to "2018-11-09".
