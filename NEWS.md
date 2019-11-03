@@ -1,3 +1,30 @@
+# AzureStor 3.0.0
+
+## Significant user-visible changes
+
+- Substantial enhancements to multiple-file transfers (up and down):
+  - These can now accept a vector of pathnames as the source and destination arguments.
+  - Alternatively, for a wildcard source, add the ability to recurse through subdirectories. Any directory structure in the source will be reproduced at the destination.
+- Related to the above: the file transfer methods can now create subdirectories that are specified in their destination argument. For ADLS and blob uploading this happens automatically; for Azure file uploading it requires a separate API call which can be slow, so is optional.
+- The default destination directory when transferring files (not connections) is now the (remote) root for uploading, and the (local) current directory for downloading.
+- Significant changes to file storage methods for greater consistency with the other storage types:
+  - The default directory for `list_azure_files` is now the root, mirroring the behaviour for blobs and ADLSgen2.
+  - The output of `list_azure_files` now includes the full path as part of the file/directory name.
+  - Add `recursive` argument to `list_azure_files`, `create_azure_dir` and `delete_azure_dir` for recursing through subdirectories. Like with file transfers, for Azure file storage this can be slow, so try to use a non-recursive solution where possible.
+- Make output format for `list_adls_files`, `list_blobs` and `list_azure_files` more consistent. The first 2 columns for a data frame output are now always `name` and `size`; the size of a directory is NA. The 3rd column for non-blobs is `isdir` which is TRUE/FALSE depending on whether the object is a directory or file. Any additional columns remain storage type-specific.
+- New `get_storage_metadata` and `set_storage_metadata` methods for managing user-specified properties (metadata) for objects.
+- Revamped methods for getting standard properties, which are now all methods for `get_storage_properties` rather than having specific functions for blobs, files and directories.
+- Creating a service-specific endpoint (`file_endpoint`, `blob_endpoint`, `adls_endpoint`) with an invalid URL will now warn, instead of throwing an error. This enables using tools like Azurite, which use a local address as the endpoint. Calling `storage_endpoint` with an invalid URL will still throw an error, as the function has no way of telling which storage service is required.
+
+## Other changes
+
+- Remove the warning about ADLSgen2 not supporting shared access signatures (SAS).
+- Background process pool functionality has been moved to AzureRMR. This removes code duplication, and also makes it available for other packages that may benefit.
+- Only display the file transfer progress bar in an interactive session.
+- Export `do_container_op` and `call_storage_endpoint` to allow direct calls to the storage account endpoint.
+- Fix S3 dispatching bugs in `copy_url_to_storage` and `multicopy_url_to_storage`.
+- A `NULL` download destination will now actually return a raw vector as opposed to a connection, matching what the documentation says.
+
 # AzureStor 2.1.1
 
 - Correctly handle ADLSgen2 and file storage listings with more than 5000 files.

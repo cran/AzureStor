@@ -8,35 +8,43 @@
 \alias{multidownload_blob}
 \alias{delete_blob}
 \alias{copy_url_to_blob}
+\alias{multicopy_url_to_blob}
 \title{Operations on a blob container or blob}
 \usage{
-list_blobs(container, info = c("partial", "name", "all"),
-  prefix = NULL)
+list_blobs(container, dir = "/", info = c("partial", "name", "all"),
+  prefix = NULL, recursive = TRUE)
 
-upload_blob(container, src, dest, type = "BlockBlob", blocksize = 2^24,
-  lease = NULL, use_azcopy = FALSE)
+upload_blob(container, src, dest = basename(src), type = "BlockBlob",
+  blocksize = 2^24, lease = NULL, use_azcopy = FALSE)
 
-multiupload_blob(container, src, dest, type = "BlockBlob",
-  blocksize = 2^24, lease = NULL, use_azcopy = FALSE,
-  max_concurrent_transfers = 10)
+multiupload_blob(container, src, dest, recursive = FALSE,
+  type = "BlockBlob", blocksize = 2^24, lease = NULL,
+  use_azcopy = FALSE, max_concurrent_transfers = 10)
 
-download_blob(container, src, dest, blocksize = 2^24,
+download_blob(container, src, dest = basename(src), blocksize = 2^24,
   overwrite = FALSE, lease = NULL, use_azcopy = FALSE)
 
-multidownload_blob(container, src, dest, blocksize = 2^24,
-  overwrite = FALSE, lease = NULL, use_azcopy = FALSE,
-  max_concurrent_transfers = 10)
+multidownload_blob(container, src, dest, recursive = recursive,
+  blocksize = 2^24, overwrite = FALSE, lease = NULL,
+  use_azcopy = FALSE, max_concurrent_transfers = 10)
 
 delete_blob(container, blob, confirm = TRUE)
 
 copy_url_to_blob(container, src, dest, lease = NULL, async = FALSE)
+
+multicopy_url_to_blob(container, src, dest, lease = NULL,
+  async = FALSE, max_concurrent_transfers = 10)
 }
 \arguments{
 \item{container}{A blob container object.}
 
+\item{dir}{For \code{list_blobs}, A string naming the directory. Note that blob storage does not support real directories; this argument simply filters the result to return only blobs whose names start with the given value.}
+
 \item{info}{For \code{list_blobs}, level of detail about each blob to return: a vector of names only; the name, size and last-modified date (default); or all information.}
 
-\item{prefix}{For \code{list_blobs}, filters the result to return only blobs whose name begins with this prefix.}
+\item{prefix}{For \code{list_blobs}, an alternative way to specify the directory.}
+
+\item{recursive}{This argument is for consistency with the methods for the other storage types. It is not used for blob storage.}
 
 \item{src, dest}{The source and destination files for uploading and downloading. See 'Details' below.}
 
@@ -56,7 +64,7 @@ copy_url_to_blob(container, src, dest, lease = NULL, async = FALSE)
 
 \item{confirm}{Whether to ask for confirmation on deleting a blob.}
 
-\item{async}{For \code{copy_url_to_blob}, whether the copy operation should be asynchronous (proceed in the background).}
+\item{async}{For \code{copy_url_to_blob} and \code{multicopy_url_to_blob}, whether the copy operation should be asynchronous (proceed in the background).}
 }
 \value{
 For \code{list_blobs}, details on the blobs in the container. For \code{download_blob}, if \code{dest=NULL}, the contents of the downloaded blob as a raw vector.
@@ -65,15 +73,17 @@ For \code{list_blobs}, details on the blobs in the container. For \code{download
 Upload, download, or delete a blob; list blobs in a container.
 }
 \details{
-\code{upload_blob} and \code{download_blob} are the workhorse file transfer functions for blobs. They each take as inputs a \emph{single} filename or connection as the source for uploading/downloading, and a single filename as the destination.
+\code{upload_blob} and \code{download_blob} are the workhorse file transfer functions for blobs. They each take as inputs a \emph{single} filename as the source for uploading/downloading, and a single filename as the destination. Alternatively, for uploading, \code{src} can be a \link{textConnection} or \link{rawConnection} object; and for downloading, \code{dest} can be NULL or a \code{rawConnection} object. If \code{dest} is NULL, the downloaded data is returned as a raw vector, and if a raw connection, it will be placed into the connection. See the examples below.
 
-\code{multiupload_blob} and \code{multidownload_blob} are functions for uploading and downloading \emph{multiple} blobs at once. They parallelise file transfers by deploying a pool of R processes in the background, which can lead to significantly greater efficiency when transferring many small files. They take as input a wildcard pattern as the source, which expands to one or more files. The \code{dest} argument should be a directory.
+\code{multiupload_blob} and \code{multidownload_blob} are functions for uploading and downloading \emph{multiple} files at once. They parallelise file transfers by using the background process pool provided by AzureRMR, which can lead to significant efficiency gains when transferring many small files. There are two ways to specify the source and destination for these functions:
+\itemize{
+\item Both \code{src} and \code{dest} can be vectors naming the individual source and destination pathnames.
+\item The \code{src} argument can be a wildcard pattern expanding to one or more files, with \code{dest} naming a destination directory. In this case, if \code{recursive} is true, the file transfer will replicate the source directory structure at the destination.
+}
 
-The file transfer functions also support working with connections to allow transferring R objects without creating temporary files. For uploading, \code{src} can be a \link{textConnection} or \link{rawConnection} object. For downloading, \code{dest} can be NULL or a \code{rawConnection} object. In the former case, the downloaded data is returned as a raw vector, and for the latter, it will be placed into the connection. See the examples below.
+\code{upload_blob} and \code{download_blob} can display a progress bar to track the file transfer. You can control whether to display this with \code{options(azure_storage_progress_bar=TRUE|FALSE)}; the default is TRUE.
 
-By default, the upload and download functions will display a progress bar to track the file transfer. To turn this off, use \code{options(azure_storage_progress_bar=FALSE)}. To turn the progress bar back on, use \code{options(azure_storage_progress_bar=TRUE)}.
-
-\code{copy_url_to_blob} transfers the contents of the file at the specified HTTP[S] URL directly to blob storage, without requiring a temporary local copy to be made. This has a current file size limit of 256MB.
+\code{copy_url_to_blob} transfers the contents of the file at the specified HTTP[S] URL directly to blob storage, without requiring a temporary local copy to be made. \code{multicopy_url_to_blob} does the same, for multiple URLs at once. These functions have a current file size limit of 256MB.
 }
 \examples{
 \dontrun{
@@ -91,6 +101,11 @@ delete_blob(cont, "bigfile.zip")
 multiupload_blob(cont, "/data/logfiles/*.zip", "/uploaded_data")
 multiupload_blob(cont, "myproj/*")  # no dest directory uploads to root
 multidownload_blob(cont, "jan*.*", "/data/january")
+
+# you can also pass a vector of file/pathnames as the source and destination
+src <- c("file1.csv", "file2.csv", "file3.csv")
+dest <- paste0("uploaded_", src)
+multiupload_blob(cont, src, dest)
 
 # uploading serialized R objects via connections
 json <- jsonlite::toJSON(iris, pretty=TRUE, auto_unbox=TRUE)

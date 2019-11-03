@@ -4,7 +4,7 @@
 #'
 #' @param endpoint Either a blob endpoint object as created by [storage_endpoint], or a character string giving the URL of the endpoint.
 #' @param key,token,sas If an endpoint object is not supplied, authentication credentials: either an access key, an Azure Active Directory (AAD) token, or a SAS, in that order of priority. If no authentication credentials are provided, only public (anonymous) access to the share is possible.
-#' @param api_version If an endpoint object is not supplied, the storage API version to use when interacting with the host. Currently defaults to `"2018-03-28"`.
+#' @param api_version If an endpoint object is not supplied, the storage API version to use when interacting with the host. Currently defaults to `"2018-11-09"`.
 #' @param name The name of the blob container to get, create, or delete.
 #' @param confirm For deleting a container, whether to ask for confirmation.
 #' @param lease For deleting a leased container, the lease ID.
@@ -17,7 +17,7 @@
 #'
 #' If authenticating via AAD, you can supply the token either as a string, or as an object of class AzureToken, created via [AzureRMR::get_azure_token]. The latter is the recommended way of doing it, as it allows for automatic refreshing of expired tokens.
 #'
-#' Currently (as of May 2019), if hierarchical namespaces are enabled on a storage account, the blob API for the account is disabled. The blob endpoint is still accessible, but blob operations on the endpoint will fail. Full interoperability between blobs and ADLSgen2 is planned for later in 2019.
+#' Currently (as of October 2019), if hierarchical namespaces are enabled on a storage account, the blob API for the account is disabled. The blob endpoint is still accessible, but blob operations on the endpoint will fail. Full interoperability between blobs and ADLSgen2 is planned for later in 2019.
 #'
 #' @return
 #' For `blob_container` and `create_blob_container`, an S3 object representing an existing or created container respectively.
@@ -125,9 +125,7 @@ list_blob_containers.character <- function(endpoint, key=NULL, token=NULL, sas=N
 #' @export
 list_blob_containers.blob_endpoint <- function(endpoint, ...)
 {
-    lst <- do_storage_call(endpoint$url, "/", options=list(comp="list"),
-                           key=endpoint$key, token=endpoint$token, sas=endpoint$sas,
-                           api_version=endpoint$api_version)
+    lst <- call_storage_endpoint(endpoint, "/", options=list(comp="list"))
 
     lst <- lapply(lst$Containers, function(cont) blob_container(endpoint, cont$Name[[1]]))
     named_list(lst)
@@ -211,7 +209,7 @@ delete_blob_container.blob_endpoint <- function(endpoint, name, confirm=TRUE, le
     else list()
 
     obj <- blob_container(endpoint, name)
-    do_container_op(obj, options=list(restype="container"), headers=headers, http_verb="DELETE")
+    invisible(do_container_op(obj, options=list(restype="container"), headers=headers, http_verb="DELETE"))
 }
 
 
@@ -221,6 +219,7 @@ delete_blob_container.blob_endpoint <- function(endpoint, name, confirm=TRUE, le
 #'
 #' @param container A blob container object.
 #' @param blob A string naming a blob.
+#' @param dir For `list_blobs`, A string naming the directory. Note that blob storage does not support real directories; this argument simply filters the result to return only blobs whose names start with the given value.
 #' @param src,dest The source and destination files for uploading and downloading. See 'Details' below.
 #' @param info For `list_blobs`, level of detail about each blob to return: a vector of names only; the name, size and last-modified date (default); or all information.
 #' @param confirm Whether to ask for confirmation on deleting a blob.
@@ -230,16 +229,17 @@ delete_blob_container.blob_endpoint <- function(endpoint, name, confirm=TRUE, le
 #' @param overwrite When downloading, whether to overwrite an existing destination file.
 #' @param use_azcopy Whether to use the AzCopy utility from Microsoft to do the transfer, rather than doing it in R.
 #' @param max_concurrent_transfers For `multiupload_blob` and `multidownload_blob`, the maximum number of concurrent file transfers. Each concurrent file transfer requires a separate R process, so limit this if you are low on memory.
-#' @param prefix For `list_blobs`, filters the result to return only blobs whose name begins with this prefix.
+#' @param prefix For `list_blobs`, an alternative way to specify the directory.
+#' @param recursive This argument is for consistency with the methods for the other storage types. It is not used for blob storage.
 #'
 #' @details
-#' `upload_blob` and `download_blob` are the workhorse file transfer functions for blobs. They each take as inputs a _single_ filename or connection as the source for uploading/downloading, and a single filename as the destination.
+#' `upload_blob` and `download_blob` are the workhorse file transfer functions for blobs. They each take as inputs a _single_ filename as the source for uploading/downloading, and a single filename as the destination. Alternatively, for uploading, `src` can be a [textConnection] or [rawConnection] object; and for downloading, `dest` can be NULL or a `rawConnection` object. If `dest` is NULL, the downloaded data is returned as a raw vector, and if a raw connection, it will be placed into the connection. See the examples below.
 #'
-#' `multiupload_blob` and `multidownload_blob` are functions for uploading and downloading _multiple_ blobs at once. They parallelise file transfers by deploying a pool of R processes in the background, which can lead to significantly greater efficiency when transferring many small files. They take as input a wildcard pattern as the source, which expands to one or more files. The `dest` argument should be a directory.
+#' `multiupload_blob` and `multidownload_blob` are functions for uploading and downloading _multiple_ files at once. They parallelise file transfers by using the background process pool provided by AzureRMR, which can lead to significant efficiency gains when transferring many small files. There are two ways to specify the source and destination for these functions:
+#' - Both `src` and `dest` can be vectors naming the individual source and destination pathnames.
+#' - The `src` argument can be a wildcard pattern expanding to one or more files, with `dest` naming a destination directory. In this case, if `recursive` is true, the file transfer will replicate the source directory structure at the destination.
 #'
-#' The file transfer functions also support working with connections to allow transferring R objects without creating temporary files. For uploading, `src` can be a [textConnection] or [rawConnection] object. For downloading, `dest` can be NULL or a `rawConnection` object. In the former case, the downloaded data is returned as a raw vector, and for the latter, it will be placed into the connection. See the examples below.
-#'
-#' By default, the upload and download functions will display a progress bar to track the file transfer. To turn this off, use `options(azure_storage_progress_bar=FALSE)`. To turn the progress bar back on, use `options(azure_storage_progress_bar=TRUE)`.
+#' `upload_blob` and `download_blob` can display a progress bar to track the file transfer. You can control whether to display this with `options(azure_storage_progress_bar=TRUE|FALSE)`; the default is TRUE.
 #'
 #' @return
 #' For `list_blobs`, details on the blobs in the container. For `download_blob`, if `dest=NULL`, the contents of the downloaded blob as a raw vector.
@@ -266,6 +266,11 @@ delete_blob_container.blob_endpoint <- function(endpoint, name, confirm=TRUE, le
 #' multiupload_blob(cont, "myproj/*")  # no dest directory uploads to root
 #' multidownload_blob(cont, "jan*.*", "/data/january")
 #'
+#' # you can also pass a vector of file/pathnames as the source and destination
+#' src <- c("file1.csv", "file2.csv", "file3.csv")
+#' dest <- paste0("uploaded_", src)
+#' multiupload_blob(cont, src, dest)
+#'
 #' # uploading serialized R objects via connections
 #' json <- jsonlite::toJSON(iris, pretty=TRUE, auto_unbox=TRUE)
 #' con <- textConnection(json)
@@ -291,12 +296,15 @@ delete_blob_container.blob_endpoint <- function(endpoint, name, confirm=TRUE, le
 #' }
 #' @rdname blob
 #' @export
-list_blobs <- function(container, info=c("partial", "name", "all"),
-                       prefix=NULL)
+list_blobs <- function(container, dir="/", info=c("partial", "name", "all"),
+                       prefix=NULL, recursive=TRUE)
 {
     info <- match.arg(info)
 
     opts <- list(comp="list", restype="container")
+    if(dir != "/")
+        prefix <- dir
+
     if(!is_empty(prefix))
         opts <- c(opts, prefix=as.character(prefix))
 
@@ -321,20 +329,28 @@ list_blobs <- function(container, info=c("partial", "name", "all"),
         if(length(df) > 0)
         {
             df$`Last-Modified` <- as.POSIXct(df$`Last-Modified`, format="%a, %d %b %Y %H:%M:%S", tz="GMT")
+            df$`Creation-Time` <- as.POSIXct(df$`Creation-Time`, format="%a, %d %b %Y %H:%M:%S", tz="GMT")
             df$`Content-Length` <- as.numeric(df$`Content-Length`)
             row.names(df) <- NULL
+
+            # reorder and rename first 2 columns for consistency with ADLS, file
+            ndf <- names(df)
+            namecol <- which(ndf == "Name")
+            sizecol <- which(ndf == "Content-Length")
+            names(df)[c(namecol, sizecol)] <- c("name", "size")
+
             if(info == "partial")
-                df[c("Name", "Last-Modified", "Content-Length")]
-            else df
+                df[c(namecol, sizecol)]
+            else cbind(df[c(namecol, sizecol)], df[-c(namecol, sizecol)])
         }
-        else list()
+        else data.frame()
     }
     else unname(vapply(lst, function(b) b$Name[[1]], FUN.VALUE=character(1)))
 }
 
 #' @rdname blob
 #' @export
-upload_blob <- function(container, src, dest, type="BlockBlob", blocksize=2^24, lease=NULL,
+upload_blob <- function(container, src, dest=basename(src), type="BlockBlob", blocksize=2^24, lease=NULL,
                         use_azcopy=FALSE)
 {
     if(use_azcopy)
@@ -344,19 +360,20 @@ upload_blob <- function(container, src, dest, type="BlockBlob", blocksize=2^24, 
 
 #' @rdname blob
 #' @export
-multiupload_blob <- function(container, src, dest, type="BlockBlob", blocksize=2^24, lease=NULL,
+multiupload_blob <- function(container, src, dest, recursive=FALSE, type="BlockBlob", blocksize=2^24, lease=NULL,
                              use_azcopy=FALSE,
                              max_concurrent_transfers=10)
 {
     if(use_azcopy)
-        azcopy_upload(container, src, dest, type=type, blocksize=blocksize, lease=lease)
-    else multiupload_blob_internal(container, src, dest, type=type, blocksize=blocksize, lease=lease,
-                                   max_concurrent_transfers=max_concurrent_transfers)
+        return(azcopy_upload(container, src, dest, type=type, blocksize=blocksize, lease=lease))
+
+    multiupload_internal(container, src, dest, recursive=recursive, type=type, blocksize=blocksize, lease=lease,
+                         max_concurrent_transfers=max_concurrent_transfers)
 }
 
 #' @rdname blob
 #' @export
-download_blob <- function(container, src, dest, blocksize=2^24, overwrite=FALSE, lease=NULL,
+download_blob <- function(container, src, dest=basename(src), blocksize=2^24, overwrite=FALSE, lease=NULL,
                           use_azcopy=FALSE)
 {
     if(use_azcopy)
@@ -366,14 +383,15 @@ download_blob <- function(container, src, dest, blocksize=2^24, overwrite=FALSE,
 
 #' @rdname blob
 #' @export
-multidownload_blob <- function(container, src, dest, blocksize=2^24, overwrite=FALSE, lease=NULL,
+multidownload_blob <- function(container, src, dest, recursive=recursive, blocksize=2^24, overwrite=FALSE, lease=NULL,
                                use_azcopy=FALSE,
                                max_concurrent_transfers=10)
 {
     if(use_azcopy)
         azcopy_download(container, src, dest, overwrite=overwrite, lease=lease)
-    else multidownload_blob_internal(container, src, dest, blocksize=blocksize, overwrite=overwrite, lease=lease,
-                                     max_concurrent_transfers=max_concurrent_transfers)
+
+    multidownload_internal(container, src, dest, recursive=recursive, blocksize=blocksize, overwrite=overwrite,
+                           lease=lease, max_concurrent_transfers=max_concurrent_transfers)
 }
 
 #' @rdname blob
@@ -383,7 +401,7 @@ delete_blob <- function(container, blob, confirm=TRUE)
     if(!delete_confirmed(confirm, paste0(container$endpoint$url, container$name, "/", blob), "blob"))
         return(invisible(NULL))
 
-    do_container_op(container, blob, http_verb="DELETE")
+    invisible(do_container_op(container, blob, http_verb="DELETE"))
 }
 
 

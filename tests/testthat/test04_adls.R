@@ -127,27 +127,6 @@ test_that("ADLSgen2 client interface works",
     iris3 <- as.data.frame(jsonlite::fromJSON(con))
     expect_identical(iris, iris3)
 
-    # multiple file transfers
-    files <- lapply(1:10, function(f) paste0(sample(letters, 1000, replace=TRUE), collapse=""))
-    filenames <- sapply(1:10, function(n) file.path(tempdir(), sprintf("multitransfer_%d", n)))
-    suppressWarnings(file.remove(filenames))
-    mapply(writeLines, files, filenames)
-
-    create_adls_dir(fs, "multi")
-    multiupload_adls_file(fs, file.path(tempdir(), "multitransfer_*"), "multi")
-
-    dest_dir <- file.path(tempdir(), "adls_multitransfer")
-    suppressWarnings(unlink(dest_dir, recursive=TRUE))
-    dir.create(dest_dir)
-    multidownload_adls_file(fs, "multi/multitransfer_*", dest_dir, overwrite=TRUE)
-
-    expect_true(all(sapply(filenames, function(f)
-    {
-        src <- readBin(f, "raw", n=1e5)
-        dest <- readBin(file.path(dest_dir, basename(f)), "raw", n=1e5)
-        identical(src, dest)
-    })))
-
     # ways of deleting a filesystem
     delete_adls_filesystem(fs, confirm=FALSE)
     delete_adls_filesystem(ad, "newfs2", confirm=FALSE)
@@ -161,7 +140,7 @@ test_that("ADLSgen2 client interface works",
 
 test_that("AAD authentication works",
 {
-    url <- stor$get_adls_endpoint()$url 
+    url <- stor$get_adls_endpoint()$url
     token <- AzureRMR::get_azure_token("https://storage.azure.com/", tenant=tenant, app=app, password=password)
     ad <- adls_endpoint(url, token=token)
     fs <- create_adls_filesystem(ad, "newfs4")
@@ -173,26 +152,6 @@ test_that("AAD authentication works",
     suppressWarnings(file.remove(tok_dl))
     download_adls_file(fs, "iris.csv", tok_dl)
     expect_identical(readBin(orig_file, "raw", n=1e5), readBin(tok_dl, "raw", n=1e5))
-
-    # multiple upload and download
-    files <- lapply(1:10, function(f) paste0(sample(letters, 1000, replace=TRUE), collapse=""))
-    filenames <- sapply(1:10, function(n) file.path(tempdir(), sprintf("multitransfer_%d", n)))
-    suppressWarnings(file.remove(filenames))
-    mapply(writeLines, files, filenames)
-
-    multiupload_adls_file(fs, file.path(tempdir(), "multitransfer_*"), "/")
-
-    dest_dir <- file.path(tempdir(), "adls_multitransfer")
-    suppressWarnings(unlink(dest_dir, recursive=TRUE))
-    dir.create(dest_dir)
-    multidownload_adls_file(fs, "multitransfer_*", dest_dir, overwrite=TRUE)
-
-    expect_true(all(sapply(filenames, function(f)
-    {
-        src <- readBin(f, "raw", n=1e5)
-        dest <- readBin(file.path(dest_dir, basename(f)), "raw", n=1e5)
-        identical(src, dest)
-    })))
 
     delete_adls_filesystem(fs, confirm=FALSE)
     expect_true(is_empty(list_adls_filesystems(ad)))
@@ -293,6 +252,20 @@ test_that("chunked downloading works",
 
     con <- download_adls_file(fs, "iris.csv", NULL, blocksize=150)
     expect_identical(readBin(orig_file, "raw", n=1e5), readBin(con, "raw", n=1e5))
+})
+
+
+test_that("Default destination works",
+{
+    ad <- stor$get_adls_endpoint()
+    cont <- create_adls_filesystem(ad, "defaultdest")
+
+    orig_file <- "../resources/iris.csv"
+    upload_adls_file(cont, orig_file)
+    download_adls_file(cont, basename(orig_file))
+
+    expect_true(file.exists(basename(orig_file)))
+    file.remove(basename(orig_file))
 })
 
 
