@@ -17,8 +17,6 @@
 #'
 #' If authenticating via AAD, you can supply the token either as a string, or as an object of class AzureToken, created via [AzureRMR::get_azure_token]. The latter is the recommended way of doing it, as it allows for automatic refreshing of expired tokens.
 #'
-#' Currently (as of October 2019), if hierarchical namespaces are enabled on a storage account, the blob API for the account is disabled. The blob endpoint is still accessible, but blob operations on the endpoint will fail. Full interoperability between blobs and ADLSgen2 is planned for later in 2019.
-#'
 #' @return
 #' For `blob_container` and `create_blob_container`, an S3 object representing an existing or created container respectively.
 #'
@@ -83,7 +81,9 @@ blob_container.blob_endpoint <- function(endpoint, name, ...)
 print.blob_container <- function(x, ...)
 {
     cat("Azure blob container '", x$name, "'\n", sep="")
-    cat(sprintf("URL: %s\n", paste0(x$endpoint$url, x$name)))
+    url <- httr::parse_url(x$endpoint$url)
+    url$path <- x$name
+    cat(sprintf("URL: %s\n", httr::build_url(url)))
 
     if(!is_empty(x$endpoint$key))
         cat("Access key: <hidden>\n")
@@ -221,7 +221,7 @@ delete_blob_container.blob_endpoint <- function(endpoint, name, confirm=TRUE, le
 #' @param blob A string naming a blob.
 #' @param dir For `list_blobs`, A string naming the directory. Note that blob storage does not support real directories; this argument simply filters the result to return only blobs whose names start with the given value.
 #' @param src,dest The source and destination files for uploading and downloading. See 'Details' below.
-#' @param info For `list_blobs`, level of detail about each blob to return: a vector of names only; the name, size and last-modified date (default); or all information.
+#' @param info For `list_blobs`, level of detail about each blob to return: a vector of names only; the name, size, and whether this blob represents a directory; or all information.
 #' @param confirm Whether to ask for confirmation on deleting a blob.
 #' @param blocksize The number of bytes to upload/download per HTTP(S) request.
 #' @param lease The lease for a blob, if present.
@@ -323,14 +323,16 @@ list_blobs <- function(container, dir="/", info=c("partial", "name", "all"),
             props <- c(Name=blob$Name, blob$Properties)
             props <- data.frame(lapply(props, function(p) if(!is_empty(p)) unlist(p) else NA),
                                 stringsAsFactors=FALSE, check.names=FALSE)
+
+            # ADLS/blob interop: dir in hns-enabled acct does not have LeaseState field
+            if(is.null(props$LeaseState))
+                props$LeaseState <- NA
+            props
         })
 
         df <- do.call(rbind, rows)
         if(length(df) > 0)
         {
-            df$`Last-Modified` <- as.POSIXct(df$`Last-Modified`, format="%a, %d %b %Y %H:%M:%S", tz="GMT")
-            df$`Creation-Time` <- as.POSIXct(df$`Creation-Time`, format="%a, %d %b %Y %H:%M:%S", tz="GMT")
-            df$`Content-Length` <- as.numeric(df$`Content-Length`)
             row.names(df) <- NULL
 
             # reorder and rename first 2 columns for consistency with ADLS, file
@@ -338,10 +340,23 @@ list_blobs <- function(container, dir="/", info=c("partial", "name", "all"),
             namecol <- which(ndf == "Name")
             sizecol <- which(ndf == "Content-Length")
             names(df)[c(namecol, sizecol)] <- c("name", "size")
+            df$size <- as.numeric(df$size)
 
-            if(info == "partial")
-                df[c(namecol, sizecol)]
-            else cbind(df[c(namecol, sizecol)], df[-c(namecol, sizecol)])
+            # needed when dir was created using ADLS API
+            # this works because content-type is always set for an actual file
+            df$isdir <- is.na(df$LeaseState) | is.na(df$`Content-Type`)
+            df$size[df$isdir] <- NA
+            dircol <- which(names(df) == "isdir")
+
+            if(info == "all")
+            {
+                if(!is.null(df$`Last-Modified`))
+                    df$`Last-Modified` <- as_datetime(df$`Last-Modified`)
+                if(!is.null(df$`Creation-Time`))
+                    df$`Creation-Time` <- as_datetime(df$`Creation-Time`)
+                cbind(df[c(namecol, sizecol, dircol)], df[-c(namecol, sizecol, dircol)])
+            }
+            else df[c(namecol, sizecol, dircol)]
         }
         else data.frame()
     }
@@ -383,12 +398,12 @@ download_blob <- function(container, src, dest=basename(src), blocksize=2^24, ov
 
 #' @rdname blob
 #' @export
-multidownload_blob <- function(container, src, dest, recursive=recursive, blocksize=2^24, overwrite=FALSE, lease=NULL,
+multidownload_blob <- function(container, src, dest, recursive=FALSE, blocksize=2^24, overwrite=FALSE, lease=NULL,
                                use_azcopy=FALSE,
                                max_concurrent_transfers=10)
 {
     if(use_azcopy)
-        azcopy_download(container, src, dest, overwrite=overwrite, lease=lease)
+        return(azcopy_download(container, src, dest, overwrite=overwrite, lease=lease))
 
     multidownload_internal(container, src, dest, recursive=recursive, blocksize=blocksize, overwrite=overwrite,
                            lease=lease, max_concurrent_transfers=max_concurrent_transfers)

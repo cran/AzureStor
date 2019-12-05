@@ -15,8 +15,6 @@
 #'
 #' If authenticating via AAD, you can supply the token either as a string, or as an object of class AzureToken, created via [AzureRMR::get_azure_token]. The latter is the recommended way of doing it, as it allows for automatic refreshing of expired tokens.
 #'
-#' Currently (as of October 2019), if hierarchical namespaces are enabled on a storage account, the blob API for the account is disabled. The blob endpoint is still accessible, but blob operations on the endpoint will fail. Full interoperability between blobs and ADLSgen2 is planned for later in 2019.
-#'
 #' @return
 #' For `adls_filesystem` and `create_adls_filesystem`, an S3 object representing an existing or created filesystem respectively.
 #'
@@ -74,7 +72,9 @@ adls_filesystem.adls_endpoint <- function(endpoint, name, ...)
 print.adls_filesystem <- function(x, ...)
 {
     cat("Azure Data Lake Storage Gen2 filesystem '", x$name, "'\n", sep="")
-    cat(sprintf("URL: %s\n", paste0(x$endpoint$url, x$name)))
+    url <- httr::parse_url(x$endpoint$url)
+    url$path <- x$name
+    cat(sprintf("URL: %s\n", httr::build_url(url)))
 
     if(!is_empty(x$endpoint$key))
         cat("Access key: <hidden>\n")
@@ -320,14 +320,20 @@ list_adls_files <- function(filesystem, dir="/", info=c("all", "name"),
         else out$permissions[is.na(out$permissions)] <- ""
 
         out <- out[c("name", "contentLength", "isDirectory", "lastModified", "permissions", "etag")]
-        out$contentLength <- as.numeric(out$contentLength)
-        out$lastModified <- as.POSIXct(out$lastModified, format="%a, %d %b %Y %H:%M:%S", tz="GMT")
+        if(!is.null(out$contentLength))
+            out$contentLength <- as.numeric(out$contentLength)
+        if(!is.null(out$lastModified))
+            out$lastModified <- as_datetime(out$lastModified)
         names(out)[c(2, 3)] <- c("size", "isdir")
 
         if(all(out$permissions == ""))
             out$permissions <- NULL
         if(all(out$etag == ""))
             out$etag <- NULL
+
+        # needed when dir was created in a non-HNS enabled account
+        out$size[out$isdir] <- NA
+
         out
     }
     else as.character(out$name)

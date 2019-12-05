@@ -115,7 +115,7 @@ add_token <- function(token, headers, api)
 add_sas <- function(sas, url)
 {
     full_url <- httr::build_url(url)
-    paste0(full_url, if(is.null(url$query)) "?" else "&", sas)
+    paste0(full_url, if(is.null(url$query)) "?" else "&", sub("^\\?", "", sas))
 }
 
 
@@ -266,6 +266,12 @@ retry_transfer <- function(res)
     inherits(res, "error") &&
         grepl("curl", deparse(res$call[[1]]), fixed=TRUE) &&
         !grepl("Could not resolve host", res$message, fixed=TRUE)
+}
+
+
+as_datetime <- function(x, format="%a, %d %b %Y %H:%M:%S", tz="GMT")
+{
+    as.POSIXct(x, format=format, tz=tz)
 }
 
 
