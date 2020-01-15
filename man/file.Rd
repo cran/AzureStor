@@ -9,6 +9,7 @@
 \alias{delete_azure_file}
 \alias{create_azure_dir}
 \alias{delete_azure_dir}
+\alias{azure_file_exists}
 \title{Operations on a file share}
 \usage{
 list_azure_files(share, dir = "/", info = c("all", "name"),
@@ -33,6 +34,8 @@ delete_azure_file(share, file, confirm = TRUE)
 create_azure_dir(share, dir, recursive = FALSE)
 
 delete_azure_dir(share, dir, recursive = FALSE, confirm = TRUE)
+
+azure_file_exists(share, file)
 }
 \arguments{
 \item{share}{A file share object.}
@@ -63,9 +66,11 @@ delete_azure_dir(share, dir, recursive = FALSE, confirm = TRUE)
 For \code{list_azure_files}, if \code{info="name"}, a vector of file/directory names. If \code{info="all"}, a data frame giving the file size and whether each object is a file or directory.
 
 For \code{download_azure_file}, if \code{dest=NULL}, the contents of the downloaded file as a raw vector.
+
+For \code{azure_file_exists}, either TRUE or FALSE.
 }
 \description{
-Upload, download, or delete a file; list files in a directory; create or delete directories.
+Upload, download, or delete a file; list files in a directory; create or delete directories; check file existence.
 }
 \details{
 \code{upload_azure_file} and \code{download_azure_file} are the workhorse file transfer functions for file storage. They each take as inputs a \emph{single} filename as the source for uploading/downloading, and a single filename as the destination. Alternatively, for uploading, \code{src} can be a \link{textConnection} or \link{rawConnection} object; and for downloading, \code{dest} can be NULL or a \code{rawConnection} object. If \code{dest} is NULL, the downloaded data is returned as a raw vector, and if a raw connection, it will be placed into the connection. See the examples below.
@@ -78,6 +83,13 @@ Upload, download, or delete a file; list files in a directory; create or delete 
 
 \code{upload_azure_file} and \code{download_azure_file} can display a progress bar to track the file transfer. You can control whether to display this with \code{options(azure_storage_progress_bar=TRUE|FALSE)}; the default is TRUE.
 }
+\section{AzCopy}{
+
+\code{upload_azure_file} and \code{download_azure_file} have the ability to use the AzCopy commandline utility to transfer files, instead of native R code. This can be useful if you want to take advantage of AzCopy's logging and recovery features; it may also be faster in the case of transferring a very large number of small files. To enable this, set the \code{use_azcopy} argument to TRUE.
+
+Note that AzCopy only supports SAS and AAD (OAuth) token as authentication methods. AzCopy also expects a single filename or wildcard spec as its source/destination argument, not a vector of filenames or a connection.
+}
+
 \examples{
 \dontrun{
 

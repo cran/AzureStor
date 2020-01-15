@@ -196,7 +196,7 @@ delete_file_share.file_endpoint <- function(endpoint, name, confirm=TRUE, ...)
 
 #' Operations on a file share
 #'
-#' Upload, download, or delete a file; list files in a directory; create or delete directories.
+#' Upload, download, or delete a file; list files in a directory; create or delete directories; check file existence.
 #'
 #' @param share A file share object.
 #' @param dir,file A string naming a directory or file respectively.
@@ -220,10 +220,17 @@ delete_file_share.file_endpoint <- function(endpoint, name, confirm=TRUE, ...)
 #'
 #' `upload_azure_file` and `download_azure_file` can display a progress bar to track the file transfer. You can control whether to display this with `options(azure_storage_progress_bar=TRUE|FALSE)`; the default is TRUE.
 #'
+#' @section AzCopy:
+#' `upload_azure_file` and `download_azure_file` have the ability to use the AzCopy commandline utility to transfer files, instead of native R code. This can be useful if you want to take advantage of AzCopy's logging and recovery features; it may also be faster in the case of transferring a very large number of small files. To enable this, set the `use_azcopy` argument to TRUE.
+#'
+#' Note that AzCopy only supports SAS and AAD (OAuth) token as authentication methods. AzCopy also expects a single filename or wildcard spec as its source/destination argument, not a vector of filenames or a connection.
+#'
 #' @return
 #' For `list_azure_files`, if `info="name"`, a vector of file/directory names. If `info="all"`, a data frame giving the file size and whether each object is a file or directory.
 #'
 #' For `download_azure_file`, if `dest=NULL`, the contents of the downloaded file as a raw vector.
+#'
+#' For `azure_file_exists`, either TRUE or FALSE.
 #'
 #' @seealso
 #' [file_share], [az_storage], [storage_download], [call_azcopy]
@@ -332,7 +339,7 @@ multiupload_azure_file <- function(share, src, dest, recursive=FALSE, create_dir
                                    max_concurrent_transfers=10)
 {
     if(use_azcopy)
-        return(azcopy_upload(share, src, dest, blocksize=blocksize))
+        return(azcopy_upload(share, src, dest, blocksize=blocksize, recursive=recursive))
 
     multiupload_internal(share, src, dest, recursive=recursive, create_dir=create_dir, blocksize=blocksize,
                          max_concurrent_transfers=max_concurrent_transfers)
@@ -354,7 +361,7 @@ multidownload_azure_file <- function(share, src, dest, recursive=FALSE, blocksiz
                                      max_concurrent_transfers=10)
 {
     if(use_azcopy)
-        return(azcopy_download(share, src, dest, overwrite=overwrite))
+        return(azcopy_download(share, src, dest, overwrite=overwrite, recursive=recursive))
 
     multidownload_internal(share, src, dest, recursive=recursive, blocksize=blocksize, overwrite=overwrite,
                            max_concurrent_transfers=max_concurrent_transfers)
@@ -399,3 +406,14 @@ delete_azure_dir <- function(share, dir, recursive=FALSE, confirm=TRUE)
     invisible(do_container_op(share, dir, options=list(restype="directory"), http_verb="DELETE"))
 }
 
+#' @rdname file
+#' @export
+azure_file_exists <- function(share, file)
+{
+    res <- do_container_op(share, file, headers = list(), http_verb = "HEAD", http_status_handler = "pass")
+    if (httr::status_code(res) == 404L)
+        return(FALSE)
+
+    httr::stop_for_status(res, storage_error_message(res))
+    return(TRUE)
+}

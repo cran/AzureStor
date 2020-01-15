@@ -7,6 +7,7 @@
 \alias{download_blob}
 \alias{multidownload_blob}
 \alias{delete_blob}
+\alias{blob_exists}
 \alias{copy_url_to_blob}
 \alias{multicopy_url_to_blob}
 \title{Operations on a blob container or blob}
@@ -29,6 +30,8 @@ multidownload_blob(container, src, dest, recursive = FALSE,
   use_azcopy = FALSE, max_concurrent_transfers = 10)
 
 delete_blob(container, blob, confirm = TRUE)
+
+blob_exists(container, blob)
 
 copy_url_to_blob(container, src, dest, lease = NULL, async = FALSE)
 
@@ -67,10 +70,10 @@ multicopy_url_to_blob(container, src, dest, lease = NULL,
 \item{async}{For \code{copy_url_to_blob} and \code{multicopy_url_to_blob}, whether the copy operation should be asynchronous (proceed in the background).}
 }
 \value{
-For \code{list_blobs}, details on the blobs in the container. For \code{download_blob}, if \code{dest=NULL}, the contents of the downloaded blob as a raw vector.
+For \code{list_blobs}, details on the blobs in the container. For \code{download_blob}, if \code{dest=NULL}, the contents of the downloaded blob as a raw vector. For \code{blob_exists} a flag whether the blob exists.
 }
 \description{
-Upload, download, or delete a blob; list blobs in a container.
+Upload, download, or delete a blob; list blobs in a container; check blob availability.
 }
 \details{
 \code{upload_blob} and \code{download_blob} are the workhorse file transfer functions for blobs. They each take as inputs a \emph{single} filename as the source for uploading/downloading, and a single filename as the destination. Alternatively, for uploading, \code{src} can be a \link{textConnection} or \link{rawConnection} object; and for downloading, \code{dest} can be NULL or a \code{rawConnection} object. If \code{dest} is NULL, the downloaded data is returned as a raw vector, and if a raw connection, it will be placed into the connection. See the examples below.
@@ -85,6 +88,13 @@ Upload, download, or delete a blob; list blobs in a container.
 
 \code{copy_url_to_blob} transfers the contents of the file at the specified HTTP[S] URL directly to blob storage, without requiring a temporary local copy to be made. \code{multicopy_url_to_blob} does the same, for multiple URLs at once. These functions have a current file size limit of 256MB.
 }
+\section{AzCopy}{
+
+\code{upload_blob} and \code{download_blob} have the ability to use the AzCopy commandline utility to transfer files, instead of native R code. This can be useful if you want to take advantage of AzCopy's logging and recovery features; it may also be faster in the case of transferring a very large number of small files. To enable this, set the \code{use_azcopy} argument to TRUE.
+
+Note that AzCopy only supports SAS and AAD (OAuth) token as authentication methods. AzCopy also expects a single filename or wildcard spec as its source/destination argument, not a vector of filenames or a connection.
+}
+
 \examples{
 \dontrun{
 
