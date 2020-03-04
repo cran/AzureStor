@@ -9,6 +9,7 @@
 #' @param ... Any additional arguments to pass to `httr::VERB`.
 #' @param http_verb The HTTP verb as a string, one of `GET`, `DELETE`, `PUT`, `POST`, `HEAD` or `PATCH`.
 #' @param http_status_handler The R handler for the HTTP status code of the response. `"stop"`, `"warn"` or `"message"` will call the corresponding handlers in httr, while `"pass"` ignores the status code. The latter is primarily useful for debugging purposes.
+#' @param timeout Optionally, the number of seconds to wait for a result. If the timeout interval elapses before the storage service has finished processing the operation, it returns an error. The default timeout is taken from the system option `azure_storage_timeout`; if this is `NULL` it means to use the service default.
 #' @param progress Used by the file transfer functions, to display a progress bar.
 #' @param return_headers Whether to return the (parsed) response headers, rather than the body. Ignored if `http_status_handler="pass"`.
 #' @details
@@ -51,6 +52,7 @@ do_container_op <- function(container, operation="", options=list(), headers=lis
 call_storage_endpoint <- function(endpoint, path, options=list(), headers=list(), body=NULL, ...,
                                   http_verb=c("GET", "DELETE", "PUT", "POST", "HEAD", "PATCH"),
                                   http_status_handler=c("stop", "warn", "message", "pass"),
+                                  timeout=getOption("azure_storage_timeout"),
                                   progress=NULL, return_headers=(http_verb == "HEAD"))
 {
     http_verb <- match.arg(http_verb)
@@ -59,21 +61,20 @@ call_storage_endpoint <- function(endpoint, path, options=list(), headers=list()
     if(!is_empty(options))
         url$query <- options[order(names(options))] # must be sorted for access key signing
 
-    # use key if provided, otherwise AAD token if provided, otherwise sas if provided, otherwise anonymous access
-    if(!is.null(endpoint$key))
-        headers <- sign_request(endpoint$key, http_verb, url, headers, endpoint$api_version)
-    else if(!is.null(endpoint$token))
-        headers$`x-ms-version` <- endpoint$api_version
-    else if(!is.null(endpoint$sas))
-        url <- add_sas(endpoint$sas, url)
-
+    options$timeout <- timeout
+    headers$`x-ms-version` <- endpoint$api_version
     retries <- as.numeric(getOption("azure_storage_retries"))
     r <- 0
     repeat
     {
         r <- r + 1
-        if(!is.null(endpoint$token))
+        # use key if provided, otherwise AAD token if provided, otherwise sas if provided, otherwise anonymous access
+        if(!is.null(endpoint$key))
+            headers <- sign_request(endpoint, http_verb, url, headers, endpoint$api_version)
+        else if(!is.null(endpoint$token))
             headers$Authorization <- paste("Bearer", validate_token(endpoint$token))
+        else if(!is.null(endpoint$sas) && r == 1)
+            url <- add_sas(endpoint$sas, url)
 
         # retry on curl errors, not on httr errors
         response <- tryCatch(httr::VERB(http_verb, url, do.call(httr::add_headers, headers), body=body, progress, ...),
@@ -114,55 +115,6 @@ add_sas <- function(sas, url)
 {
     full_url <- httr::build_url(url)
     paste0(full_url, if(is.null(url$query)) "?" else "&", sub("^\\?", "", sas))
-}
-
-
-sign_request <- function(key, verb, url, headers, api)
-{
-    acct_name <- sub("\\..+$", "", url$host)
-    resource <- paste0("/", acct_name, "/", url$path) # don't use file.path because it strips trailing / on Windows
-    # sanity check
-    resource <- gsub("//", "/", resource)
-
-    if(is.null(headers$date) || is.null(headers$Date))
-        headers$date <- httr::http_date(Sys.time())
-    if(is.null(headers$`x-ms-version`))
-        headers$`x-ms-version` <- api
-
-    sig <- make_signature(key, verb, acct_name, resource, url$query, headers)
-
-    c(Host=url$host, Authorization=sig, headers)
-}
-
-
-make_signature <- function(key, verb, acct_name, resource, options, headers)
-{
-    names(headers) <- tolower(names(headers))
-
-    ms_headers <- headers[grepl("^x-ms", names(headers))]
-    ms_headers <- ms_headers[order(names(ms_headers))]
-    ms_headers <- paste(names(ms_headers), ms_headers, sep=":", collapse="\n")
-    options <- paste(names(options), options, sep=":", collapse="\n")
-
-    sig <- paste(verb,
-                 as.character(headers[["content-encoding"]]),
-                 as.character(headers[["content-language"]]),
-                 as.character(headers[["content-length"]]),
-                 as.character(headers[["content-md5"]]),
-                 as.character(headers[["content-type"]]),
-                 as.character(headers[["date"]]),
-                 as.character(headers[["if-modified-since"]]),
-                 as.character(headers[["if-match"]]),
-                 as.character(headers[["if-none-match"]]),
-                 as.character(headers[["if-unmodified-since"]]),
-                 as.character(headers[["range"]]),
-                 ms_headers,
-                 resource,
-                 options, sep="\n")
-    sig <- sub("\n$", "", sig) # undocumented, found thanks to Tsuyoshi Matsuzaki's blog post
-
-    hash <- openssl::sha256(charToRaw(sig), openssl::base64_decode(key))
-    paste0("SharedKey ", acct_name, ":", openssl::base64_encode(hash))
 }
 
 
