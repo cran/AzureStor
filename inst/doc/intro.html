@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 
 <head>
 
 <meta charset="utf-8" />
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 
 <meta name="author" content="Hong Ooi" />
 
@@ -97,7 +97,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
       if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
       var style = rule.style.cssText;
       // check if color or background-color is set
-      if (rule.style.color === '' || rule.style.backgroundColor === '') continue;
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
       // replace div.sourceCode by a pre.sourceCode rule
       sheets[i].deleteRule(j);
       sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
@@ -118,9 +118,6 @@ padding-right: 2em;
 font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
 font-size: 14px;
 line-height: 1.35;
-}
-#header {
-text-align: center;
 }
 #TOC {
 clear: both;
@@ -289,8 +286,12 @@ code > span.st { color: #d14; }
 code > span.co { color: #888888; font-style: italic; } 
 code > span.ot { color: #007020; } 
 code > span.al { color: #ff0000; font-weight: bold; } 
-code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61717; background-color: #e3d2d2; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
 </style>
+
+
+
 
 </head>
 
@@ -300,7 +301,7 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 
 
 <h1 class="title toc-ignore">Introduction to AzureStor</h1>
-<h4 class="author"><em>Hong Ooi</em></h4>
+<h4 class="author">Hong Ooi</h4>
 
 
 
@@ -412,10 +413,10 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <p>AzureStor includes an interface to <a href="https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-v10">AzCopy</a>, Microsoft’s high-performance commandline utility for copying files to and from storage. To take advantage of this, simply include the argument <code>use_azcopy=TRUE</code> on any upload or download function. AzureStor will then call AzCopy to perform the file transfer, rather than using its own internal code. In addition, a <code>call_azcopy</code> function is provided to let you use AzCopy for any task.</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="co"># use azcopy to download</span></span>
 <span id="cb7-2"><a href="#cb7-2"></a>myfs &lt;-<span class="st"> </span><span class="kw">storage_container</span>(ad_endp, <span class="st">&quot;myfilesystem&quot;</span>)</span>
-<span id="cb7-3"><a href="#cb7-3"></a><span class="kw">storage_download</span>(adlsfs, <span class="st">&quot;/incoming/bigfile.tar.gz&quot;</span>, <span class="st">&quot;/data&quot;</span>)</span>
+<span id="cb7-3"><a href="#cb7-3"></a><span class="kw">storage_download</span>(myfs, <span class="st">&quot;/incoming/bigfile.tar.gz&quot;</span>, <span class="st">&quot;/data&quot;</span>, <span class="dt">use_azcopy=</span><span class="ot">TRUE</span>)</span>
 <span id="cb7-4"><a href="#cb7-4"></a></span>
 <span id="cb7-5"><a href="#cb7-5"></a><span class="co"># use azcopy to sync a local and remote dir</span></span>
-<span id="cb7-6"><a href="#cb7-6"></a><span class="kw">call_azcopy</span>(<span class="st">&#39;sync c:/local/path &quot;https://mystorage.blob.core.windows.net/mycontainer&quot; --recursive=true&#39;</span>)</span></code></pre></div>
+<span id="cb7-6"><a href="#cb7-6"></a><span class="kw">call_azcopy</span>(<span class="st">&quot;sync&quot;</span>, <span class="st">&quot;c:/local/path&quot;</span>, <span class="st">&quot;https://mystorage.blob.core.windows.net/mycontainer&quot;</span>, <span class="st">&quot;--recursive=true&quot;</span>)</span></code></pre></div>
 <p>For more information, see the <a href="https://github.com/Azure/azure-storage-azcopy">AzCopy repo on GitHub</a>.</p>
 <p><strong>Note that AzureStor uses AzCopy version 10. It is incompatible with versions 8.1 and earlier.</strong></p>
 </div>
@@ -508,6 +509,9 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <p>For more information about the different types of storage, see the <a href="https://docs.microsoft.com/en-us/azure/storage/">Microsoft Docs site</a>. Note that there are other types of storage (queue, table) that do not have a client interface exposed by AzureStor.</p>
 </div>
 
+
+
+<!-- code folding -->
 
 
 <!-- dynamically load mathjax for compatibility with self-contained -->

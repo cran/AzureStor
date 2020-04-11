@@ -19,24 +19,6 @@ stor <- sub$get_resource_group(rgname)$get_storage_account(storname)
 bl <- stor$get_blob_endpoint()
 options(azure_storage_progress_bar=FALSE)
 
-write_file <- function(dir, size=1000)
-{
-    fname <- tempfile(tmpdir=dir)
-    bytes <- openssl::rand_bytes(size)
-    writeBin(bytes, fname)
-    basename(fname)
-}
-
-files_identical <- function(set1, set2)
-{
-    all(mapply(function(f1, f2)
-    {
-        s1 <- file.size(f1)
-        s2 <- file.size(f2)
-        s1 == s2 && identical(readBin(f1, "raw", s1), readBin(f2, "raw", s2))
-    }, set1, set2))
-}
-
 srcdir <- tempfile(pattern="ul")
 destdir <- tempfile(pattern="dl")
 destdir2 <- tempfile(pattern="dl")
@@ -90,7 +72,7 @@ test_that("Blob vector multitransfer works",
     multiupload_blob(cont, file.path(srcdir, srcs), srcs)
     multidownload_blob(cont, srcs, file.path(destdir, srcs))
 
-    expect_identical(AzureRMR::pool_size(), 10L)
+    expect_identical(AzureRMR::pool_size(), 2L)
     expect_true(files_identical(file.path(srcdir, srcs), file.path(destdir, srcs)))
 
     # vector src needs vector dest

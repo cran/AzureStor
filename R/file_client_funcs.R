@@ -4,7 +4,7 @@
 #'
 #' @param endpoint Either a file endpoint object as created by [storage_endpoint], or a character string giving the URL of the endpoint.
 #' @param key,token,sas If an endpoint object is not supplied, authentication credentials: either an access key, an Azure Active Directory (AAD) token, or a SAS, in that order of priority.
-#' @param api_version If an endpoint object is not supplied, the storage API version to use when interacting with the host. Currently defaults to `"2018-11-09"`.
+#' @param api_version If an endpoint object is not supplied, the storage API version to use when interacting with the host. Currently defaults to `"2019-07-07"`.
 #' @param name The name of the file share to get, create, or delete.
 #' @param confirm For deleting a share, whether to ask for confirmation.
 #' @param x For the print method, a file share object.
@@ -115,9 +115,14 @@ list_file_shares.character <- function(endpoint, key=NULL, token=NULL, sas=NULL,
 #' @export
 list_file_shares.file_endpoint <- function(endpoint, ...)
 {
-    lst <- call_storage_endpoint(endpoint, "/", options=list(comp="list"))
+    res <- call_storage_endpoint(endpoint, "/", options=list(comp="list"))
+    lst <- lapply(res$Shares, function(cont) file_share(endpoint, cont$Name[[1]]))
 
-    lst <- lapply(lst$Shares, function(cont) file_share(endpoint, cont$Name[[1]]))
+    while(length(res$NextMarker) > 0)
+    {
+        res <- call_storage_endpoint(endpoint, "/", options=list(comp="list", marker=res$NextMarker[[1]]))
+        lst <- c(lst, lapply(res$Shares, function(cont) file_share(endpoint, cont$Name[[1]])))
+    }
     named_list(lst)
 }
 
@@ -387,7 +392,8 @@ create_azure_dir <- function(share, dir, recursive=FALSE)
     if(recursive)
         try(create_azure_dir(share, dirname(dir), recursive=TRUE), silent=TRUE)
 
-    invisible(do_container_op(share, dir, options=list(restype="directory"), http_verb="PUT"))
+    invisible(do_container_op(share, dir, options=list(restype="directory"),
+        headers=dir_default_perms, http_verb="PUT"))
 }
 
 #' @rdname file

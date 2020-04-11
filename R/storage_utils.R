@@ -170,7 +170,7 @@ parse_storage_url <- function(url)
     url <- httr::parse_url(url)
     endpoint <- paste0(url$scheme, "://", url$host, "/")
     store <- sub("/.*$", "", url$path)
-    path <- sub("^[^/]+/", "", url$path)
+    path <- if(url$path == store) "" else sub("^[^/]+/", "", url$path)
     c(endpoint, store, path)
 }
 
@@ -242,5 +242,21 @@ delete_confirmed <- function(confirm, name, type)
     }
     else utils::askYesNo(msg, FALSE)
     isTRUE(ok)
+}
+
+
+render_xml <- function(lst)
+{
+    xml <- xml2::as_xml_document(lst)
+    rc <- rawConnection(raw(0), "w")
+    on.exit(close(rc))
+    xml2::write_xml(xml, rc)
+    rawToChar(rawConnectionValue(rc))
+}
+
+
+sign_sha256 <- function(string, key)
+{
+    openssl::base64_encode(openssl::sha256(charToRaw(string), openssl::base64_decode(key)))
 }
 

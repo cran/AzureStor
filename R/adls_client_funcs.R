@@ -4,7 +4,7 @@
 #'
 #' @param endpoint Either an ADLSgen2 endpoint object as created by [storage_endpoint] or [adls_endpoint], or a character string giving the URL of the endpoint.
 #' @param key,token,sas If an endpoint object is not supplied, authentication credentials: either an access key, an Azure Active Directory (AAD) token, or a SAS, in that order of priority. Currently the `sas` argument is unused.
-#' @param api_version If an endpoint object is not supplied, the storage API version to use when interacting with the host. Currently defaults to `"2018-11-09"`.
+#' @param api_version If an endpoint object is not supplied, the storage API version to use when interacting with the host. Currently defaults to `"2019-07-07"`.
 #' @param name The name of the filesystem to get, create, or delete.
 #' @param confirm For deleting a filesystem, whether to ask for confirmation.
 #' @param x For the print method, a filesystem object.
@@ -117,9 +117,27 @@ list_adls_filesystems.character <- function(endpoint, key=NULL, token=NULL, sas=
 #' @export
 list_adls_filesystems.adls_endpoint <- function(endpoint, ...)
 {
-    lst <- call_storage_endpoint(endpoint, "/", options=list(resource="account"))
+    res <- call_storage_endpoint(endpoint, "/", options=list(resource="account"), http_status_handler="pass")
+    httr::stop_for_status(res, storage_error_message((res)))
+    continue <- httr::headers(res)$`x-ms-continuation`
+    res <- httr::content(res, simplifyVector=TRUE)
+    lst <- sapply(res$filesystems$name,
+                  function(fs) adls_filesystem(endpoint, fs), simplify=FALSE)
 
-    sapply(lst$filesystems$name, function(fs) adls_filesystem(endpoint, fs), simplify=FALSE)
+    while(!is_empty(continue) && nchar(continue) > 0)
+    {
+        res <- call_storage_endpoint(
+            endpoint, "/",
+            options=list(resource="account", continuation=continue),
+            http_status_handler="pass"
+        )
+        httr::stop_for_status(res, storage_error_message((res)))
+        continue <- httr::headers(res)$`x-ms-continuation`
+        res <- httr::content(res, simplifyVector=TRUE)
+        lst <- c(lst, sapply(res$filesystems$name,
+                             function(fs) adls_filesystem(endpoint, fs), simplify=FALSE))
+    }
+    lst
 }
 
 
