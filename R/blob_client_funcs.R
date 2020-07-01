@@ -220,7 +220,7 @@ delete_blob_container.blob_endpoint <- function(endpoint, name, confirm=TRUE, le
 
 #' Operations on a blob container or blob
 #'
-#' Upload, download, or delete a blob; list blobs in a container; check blob availability.
+#' Upload, download, or delete a blob; list blobs in a container; create or delete directories; check blob availability.
 #'
 #' @param container A blob container object.
 #' @param blob A string naming a blob.
@@ -235,7 +235,7 @@ delete_blob_container.blob_endpoint <- function(endpoint, name, confirm=TRUE, le
 #' @param use_azcopy Whether to use the AzCopy utility from Microsoft to do the transfer, rather than doing it in R.
 #' @param max_concurrent_transfers For `multiupload_blob` and `multidownload_blob`, the maximum number of concurrent file transfers. Each concurrent file transfer requires a separate R process, so limit this if you are low on memory.
 #' @param prefix For `list_blobs`, an alternative way to specify the directory.
-#' @param recursive This argument is for consistency with the methods for the other storage types. It is not used for blob storage.
+#' @param recursive For the multiupload/download functions, whether to recursively transfer files in subdirectories. For `list_blobs`, whether to include the contents of any subdirectories in the listing. For `delete_blob_dir`, whether to recursively delete subdirectory contents as well (not yet supported).
 #'
 #' @details
 #' `upload_blob` and `download_blob` are the workhorse file transfer functions for blobs. They each take as inputs a _single_ filename as the source for uploading/downloading, and a single filename as the destination. Alternatively, for uploading, `src` can be a [textConnection] or [rawConnection] object; and for downloading, `dest` can be NULL or a `rawConnection` object. If `dest` is NULL, the downloaded data is returned as a raw vector, and if a raw connection, it will be placed into the connection. See the examples below.
@@ -250,6 +250,14 @@ delete_blob_container.blob_endpoint <- function(endpoint, name, confirm=TRUE, le
 #' `upload_blob` and `download_blob` have the ability to use the AzCopy commandline utility to transfer files, instead of native R code. This can be useful if you want to take advantage of AzCopy's logging and recovery features; it may also be faster in the case of transferring a very large number of small files. To enable this, set the `use_azcopy` argument to TRUE.
 #'
 #' Note that AzCopy only supports SAS and AAD (OAuth) token as authentication methods. AzCopy also expects a single filename or wildcard spec as its source/destination argument, not a vector of filenames or a connection.
+#'
+#' @section Directories:
+#' Blob storage does not have true directories, instead using filenames containing a separator character (typically '/') to mimic a directory structure. This has some consequences:
+#'
+#' - The `isdir` column in the data frame output of `list_blobs` is a best guess as to whether an object represents a file or directory, and may not always be correct. Currently, `list_blobs` assumes that any object with a file size of zero is a directory.
+#' - Zero-length files can cause problems for the blob storage service as a whole (not just AzureStor). Try to avoid uploading such files.
+#' - `create_blob_dir` and `delete_blob_dir` function as expected only for accounts with hierarchical namespaces enabled. When this feature is disabled, directories do not exist as objects in their own right: to create a directory, simply upload a blob to that directory. To delete a directory, delete all the blobs within it; as far as the blob storage service is concerned, the directory then no longer exists.
+#' - Similarly, the output of `list_blobs(recursive=TRUE)` can vary based on whether the storage account has hierarchical namespaces enabled.
 #'
 #' @return
 #' For `list_blobs`, details on the blobs in the container. For `download_blob`, if `dest=NULL`, the contents of the downloaded blob as a raw vector. For `blob_exists` a flag whether the blob exists.
@@ -312,11 +320,20 @@ list_blobs <- function(container, dir="/", info=c("partial", "name", "all"),
     info <- match.arg(info)
 
     opts <- list(comp="list", restype="container")
+
+    # ensure last char is always '/', to get list of blobs in a subdir
     if(dir != "/")
+    {
+        if(!grepl("/$", dir))
+            dir <- paste0(dir, "/")
         prefix <- dir
+    }
 
     if(!is_empty(prefix))
         opts <- c(opts, prefix=as.character(prefix))
+
+    if(!recursive)
+        opts <- c(opts, delimiter="/")
 
     res <- do_container_op(container, options=opts)
     lst <- res$Blobs
@@ -328,9 +345,21 @@ list_blobs <- function(container, dir="/", info=c("partial", "name", "all"),
 
     if(info != "name")
     {
-        rows <- lapply(lst, function(blob)
+        prefixes <- lst[names(lst) == "BlobPrefix"]
+        blobs <- lst[names(lst) == "Blob"]
+
+        prefix_rows <- lapply(prefixes, function(prefix)
         {
-            props <- c(Name=blob$Name, blob$Properties)
+            data.frame(Type="BlobPrefix",
+                       Name=unlist(prefix$Name),
+                       "Content-Length"=NA,
+                       stringsAsFactors=FALSE,
+                       check.names=FALSE)
+        })
+
+        blob_rows <- lapply(blobs, function(blob)
+        {
+            props <- c(Type="Blob", Name=blob$Name, blob$Properties)
             props <- data.frame(lapply(props, function(p) if(!is_empty(p)) unlist(p) else NA),
                                 stringsAsFactors=FALSE, check.names=FALSE)
 
@@ -340,7 +369,22 @@ list_blobs <- function(container, dir="/", info=c("partial", "name", "all"),
             props
         })
 
-        df <- do.call(rbind, rows)
+        df_prefixes <- do.call(rbind, prefix_rows)
+        df_blobs <- do.call(rbind, blob_rows)
+
+        if(is.null(df_prefixes) & is.null(df_blobs))
+            return(data.frame())
+        else if(is.null(df_prefixes))
+            df <- df_blobs
+        else if(is.null(df_blobs))
+            df <- df_prefixes
+        else
+        {
+            missing_cols <- setdiff(colnames(df_blobs), intersect(colnames(df_prefixes), colnames(df_blobs)))
+            df_prefixes[, missing_cols] <- NA
+            df <- rbind(df_prefixes, df_blobs)
+        }
+
         if(length(df) > 0)
         {
             row.names(df) <- NULL
@@ -350,12 +394,11 @@ list_blobs <- function(container, dir="/", info=c("partial", "name", "all"),
             namecol <- which(ndf == "Name")
             sizecol <- which(ndf == "Content-Length")
             names(df)[c(namecol, sizecol)] <- c("name", "size")
-            df$size <- as.numeric(df$size)
 
-            # needed when dir was created using ADLS API
-            # this works because content-type is always set for an actual file
-            df$isdir <- is.na(df$LeaseState) | is.na(df$`Content-Type`)
-            df$size[df$isdir] <- NA
+            df$size <- if(!is.null(df$size)) as.numeric(df$size) else NA
+            df$size[df$size == 0] <- NA
+            df$isdir <- is.na(df$size)
+
             dircol <- which(names(df) == "isdir")
 
             if(info == "all")
@@ -431,12 +474,52 @@ delete_blob <- function(container, blob, confirm=TRUE)
 
 #' @rdname blob
 #' @export
+create_blob_dir <- function(container, dir)
+{
+    # workaround: upload a zero-length file to the desired dir, then delete the file
+    destfile <- file.path(dir, basename(tempfile()))
+
+    opts <- options(azure_storage_progress_bar=FALSE)
+    on.exit(options(opts))
+
+    upload_blob(container, rawConnection(raw(0)), destfile)
+    delete_blob(container, destfile, confirm=FALSE)
+    invisible(NULL)
+}
+
+#' @rdname blob
+#' @export
+delete_blob_dir <- function(container, dir, recursive=FALSE, confirm=TRUE)
+{
+    if(dir %in% c("/", "."))
+        return(invisible(NULL))
+
+    if(!delete_confirmed(confirm, paste0(container$endpoint$url, container$name, "/", dir), "directory"))
+        return(invisible(NULL))
+
+    if(recursive)
+        stop("Recursive deleting of subdirectory contents not yet supported", call.=FALSE)
+
+    parent <- dirname(dir)
+    if(parent == ".")
+        parent <- "/"
+    lst <- list_blobs(container, parent, recursive=FALSE)
+    whichrow <- which(lst$name == paste0(dir, "/"))
+    if(is_empty(whichrow) || !lst$isdir[whichrow])
+        stop("Not a directory", call.=FALSE)
+
+    delete_blob(container, dir, confirm=FALSE)
+}
+
+#' @rdname blob
+#' @export
 blob_exists <- function(container, blob)
 {
     res <- do_container_op(container, blob, headers = list(), http_verb = "HEAD", http_status_handler = "pass")
-    if (httr::status_code(res) == 404L)
+    if(httr::status_code(res) == 404L)
         return(FALSE)
 
     httr::stop_for_status(res, storage_error_message(res))
     return(TRUE)
 }
+

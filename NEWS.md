@@ -1,3 +1,11 @@
+# AzureStor 3.2.2
+
+- Extended support for directories in blob storage. Note that since blob storage doesn't have true directories, there are some warts to be aware of; see `?blob` for more details.
+  - Implement non-recursive directory listings for `list_blobs`, thanks to @cantpitch.
+  - Fixes to the directory detection logic of `list_blobs`.
+  - Implement `create_blob_dir` and `delete_blob_dir`.
+- Remove broken implementation for recursive deleting of subdirectory contents for file storage.
+
 # AzureStor 3.2.1
 
 - Internal changes to handle differences in how table storage returns error messages.

@@ -2,7 +2,7 @@
 
 [![CRAN](https://www.r-pkg.org/badges/version/AzureStor)](https://cran.r-project.org/package=AzureStor)
 ![Downloads](https://cranlogs.r-pkg.org/badges/AzureStor)
-[![Build Status](https://asiadatascience.visualstudio.com/AzureR/_apis/build/status/Azure.AzureStor?branchName=master)](https://asiadatascience.visualstudio.com/AzureR/_build/latest?definitionId=3&branchName=master)
+![Build Status](https://asiadatascience.visualstudio.com/AzureR/_apis/build/status/Azure.AzureStor?branchName=master)
 
 This package implements both an admin- and client-side interface to [Azure Storage Services](https://docs.microsoft.com/en-us/rest/api/storageservices/). The admin interface uses R6 classes and extends the framework provided by [AzureRMR](https://github.com/Azure/AzureRMR). The client interface provides several S3 methods for efficiently managing storage and performing file transfers.
 
@@ -53,9 +53,8 @@ delete_storage_container(newcont)
 
 These functions for working with objects within a storage container:
 
-- `list_storage_files`: list files/blobs in a directory (for ADLSgen2 and file storage) or blob container
-- `create_storage_dir`: for ADLSgen2 and file storage, create a directory
-- `delete_storage_dir`: for ADLSgen2 and file storage, delete a directory
+- `list_storage_files`: list files/blobs in a directory (defaults to the root directory)
+- `create_storage_dir`/`delete_storage_dir`: create or delete a directory
 - `delete_storage_file`: delete a file or blob
 - `storage_file_exists`: check that a file or blob exists
 - `storage_upload`/`storage_download`: transfer a file to or from a storage container
@@ -65,7 +64,7 @@ These functions for working with objects within a storage container:
 
 ```r
 # example of working with files and directories (ADLSgen2)
-cont <- storage_container(ad_end_tok, "myfilesystem")
+cont <- storage_container(ad_endp_tok, "myfilesystem")
 list_storage_files(cont)
 create_storage_dir(cont, "newdir")
 storage_download(cont, "/readme.txt")
