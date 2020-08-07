@@ -1,3 +1,8 @@
+# AzureStor 3.2.3
+
+- Fix file transfers with filenames containing non-ASCII characters on Windows.
+- Require httr >= 1.4.0 for proper support of HEAD requests (reported by @scottporter).
+
 # AzureStor 3.2.2
 
 - Extended support for directories in blob storage. Note that since blob storage doesn't have true directories, there are some warts to be aware of; see `?blob` for more details.

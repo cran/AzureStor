@@ -1,6 +1,6 @@
 Package: AzureStor
 Title: Storage Management in 'Azure'
-Version: 3.2.2
+Version: 3.2.3
 Authors@R: c(
     person("Hong", "Ooi", , "hongooi@microsoft.com", role = c("aut", "cre")),
     person("Microsoft", role="cph")
@@ -11,13 +11,14 @@ URL: https://github.com/Azure/AzureStor https://github.com/Azure/AzureR
 BugReports: https://github.com/Azure/AzureStor/issues
 VignetteBuilder: knitr
 Depends: R (>= 3.3),
-Imports: utils, R6, httr, mime, openssl, xml2, AzureRMR (>= 2.3.0)
+Imports: utils, R6, httr (>= 1.4.0), mime, openssl, xml2, AzureRMR (>=
+        2.3.0)
 Suggests: knitr, rmarkdown, jsonlite, testthat, processx
 RoxygenNote: 7.1.1
 NeedsCompilation: no
-Packaged: 2020-07-01 11:09:29 UTC; hongo
+Packaged: 2020-08-06 15:00:59 UTC; hongo
 Author: Hong Ooi [aut, cre],
   Microsoft [cph]
 Maintainer: Hong Ooi <hongooi@microsoft.com>
 Repository: CRAN
-Date/Publication: 2020-07-01 11:40:07 UTC
+Date/Publication: 2020-08-07 05:22:41 UTC

@@ -1,7 +1,7 @@
-1cf3727c9c557515b0c7c5fcdb1f572e *DESCRIPTION
+a92484c8ba8426cfd56fa37585be8441 *DESCRIPTION
 fe7c703cf07e6f25fb657bab85bc2d2a *LICENSE
 5393d3827f3172c65da36c069d5a7e96 *NAMESPACE
-271bcac81fddb2ab1bedfea47c0c7abb *NEWS.md
+3d7005caca9d2ab99dfe72118d9e6304 *NEWS.md
 90c283879dc0084522a151319cf48f20 *R/AzureStor.R
 3d5aebc2f7bae72b2eb87ead385852ae *R/add_methods.R
 0000cf6758ab1ea2c9a7fcf1d35a2d63 *R/adls_client_funcs.R
@@ -20,14 +20,14 @@ be1ef4535620b538971bc0c2fe9c10f9 *R/file_client_funcs.R
 456d94ec8545344ee9adacf790d10af7 *R/file_permissions.R
 64f4baef8e50e78921b00e44d0de17a3 *R/file_transfer_internal.R
 014dc98d814cefc83a38a85f7b72320d *R/progress_bar.R
-c7df91f66d110750feadf951dbacbe13 *R/sas.R
+4c923b931f7e21ae0c3508077c290dee *R/sas.R
 6c84fcb09efe56757f13249e70bf8fb2 *R/sign_request.R
 a56fb8b5f503d4cec66e2b45067b73d7 *R/storage_metadata.R
 ca76534b27cdee1bbc78134051957200 *R/storage_properties.R
-1b8d3b39780b595febaeed629b33bb5c *R/storage_utils.R
+2739aa7d9682093ce48a98e71370c850 *R/storage_utils.R
 7c45f3237482c18556346cebbdbdc257 *R/transfer_generics.R
 abc827f361f8d6ab40292afc005a61be *R/transfer_utils.R
-910ce19f60dc684df04bfab4261d70bd *README.md
+34c02f33578fbbf4e279c90855e9fe8d *README.md
 b0b70a4a3055396d6d24d892f6395563 *build/vignette.rds
 b7efd1f78b4f122af57fb37909310976 *inst/doc/generics.Rmd
 e15670a020efe55f4da16638c3c7bf4d *inst/doc/generics.html
@@ -76,5 +76,6 @@ b2cfb8c8e03c51a02d52b0e644aec7b8 *tests/testthat/test08b_interop3.R
 85e1e9278ca8cd7947dac7a1b91b683e *tests/testthat/test08c_interop4.R
 f241e44aabb1ebecd72bb2b53961f3bc *tests/testthat/test09_azcopy.R
 27aeeccc7ee235b87094849e12d72aa7 *tests/testthat/test10_sas.R
+af66050da7e6ff86bb56cb3bd2ee48b7 *tests/testthat/test11_enc.R
 b7efd1f78b4f122af57fb37909310976 *vignettes/generics.Rmd
 fcd6da3fedf7cdbeccd017950f0ad867 *vignettes/intro.rmd
