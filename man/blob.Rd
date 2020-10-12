@@ -17,18 +17,21 @@
 list_blobs(container, dir = "/", info = c("partial", "name", "all"),
   prefix = NULL, recursive = TRUE)
 
-upload_blob(container, src, dest = basename(src), type = "BlockBlob",
-  blocksize = 2^24, lease = NULL, use_azcopy = FALSE)
+upload_blob(container, src, dest = basename(src), type = c("BlockBlob",
+  "AppendBlob"), blocksize = if (type == "BlockBlob") 2^24 else 2^22,
+  lease = NULL, put_md5 = FALSE, append = FALSE, use_azcopy = FALSE)
 
 multiupload_blob(container, src, dest, recursive = FALSE,
-  type = "BlockBlob", blocksize = 2^24, lease = NULL,
+  type = c("BlockBlob", "AppendBlob"), blocksize = if (type == "BlockBlob")
+  2^24 else 2^22, lease = NULL, put_md5 = FALSE, append = FALSE,
   use_azcopy = FALSE, max_concurrent_transfers = 10)
 
 download_blob(container, src, dest = basename(src), blocksize = 2^24,
-  overwrite = FALSE, lease = NULL, use_azcopy = FALSE)
+  overwrite = FALSE, lease = NULL, check_md5 = FALSE,
+  use_azcopy = FALSE)
 
 multidownload_blob(container, src, dest, recursive = FALSE,
-  blocksize = 2^24, overwrite = FALSE, lease = NULL,
+  blocksize = 2^24, overwrite = FALSE, lease = NULL, check_md5 = FALSE,
   use_azcopy = FALSE, max_concurrent_transfers = 10)
 
 delete_blob(container, blob, confirm = TRUE)
@@ -49,7 +52,7 @@ multicopy_url_to_blob(container, src, dest, lease = NULL, async = FALSE,
 
 \item{dir}{For \code{list_blobs}, A string naming the directory. Note that blob storage does not support real directories; this argument simply filters the result to return only blobs whose names start with the given value.}
 
-\item{info}{For \code{list_blobs}, level of detail about each blob to return: a vector of names only; the name, size, and whether this blob represents a directory; or all information.}
+\item{info}{For \code{list_blobs}, level of detail about each blob to return: a vector of names only; the name, size, blob type, and whether this blob represents a directory; or all information.}
 
 \item{prefix}{For \code{list_blobs}, an alternative way to specify the directory.}
 
@@ -57,17 +60,23 @@ multicopy_url_to_blob(container, src, dest, lease = NULL, async = FALSE,
 
 \item{src, dest}{The source and destination files for uploading and downloading. See 'Details' below.}
 
-\item{type}{When uploading, the type of blob to create. Currently only block blobs are supported.}
+\item{type}{When uploading, the type of blob to create. Currently only block and append blobs are supported.}
 
 \item{blocksize}{The number of bytes to upload/download per HTTP(S) request.}
 
 \item{lease}{The lease for a blob, if present.}
+
+\item{put_md5}{For uploading, whether to compute the MD5 hash of the blob(s). This will be stored as part of the blob's properties. Only used for block blobs.}
+
+\item{append}{When uploading, whether to append the uploaded data to the destination blob. Only has an effect if \code{type="AppendBlob"}. If this is FALSE (the default) and the destination append blob exists, it is overwritten. If this is TRUE and the destination does not exist or is not an append blob, an error is thrown.}
 
 \item{use_azcopy}{Whether to use the AzCopy utility from Microsoft to do the transfer, rather than doing it in R.}
 
 \item{max_concurrent_transfers}{For \code{multiupload_blob} and \code{multidownload_blob}, the maximum number of concurrent file transfers. Each concurrent file transfer requires a separate R process, so limit this if you are low on memory.}
 
 \item{overwrite}{When downloading, whether to overwrite an existing destination file.}
+
+\item{check_md5}{For downloading, whether to verify the MD5 hash of the downloaded blob(s). This requires that the blob's \code{Content-MD5} property is set. If this is TRUE and the \code{Content-MD5} property is missing, a warning is generated.}
 
 \item{blob}{A string naming a blob.}
 
@@ -92,13 +101,19 @@ Upload, download, or delete a blob; list blobs in a container; create or delete 
 
 \code{upload_blob} and \code{download_blob} can display a progress bar to track the file transfer. You can control whether to display this with \code{options(azure_storage_progress_bar=TRUE|FALSE)}; the default is TRUE.
 
+\code{multiupload_blob} can upload files either as all block blobs or all append blobs, but not a mix of both.
+
 \code{copy_url_to_blob} transfers the contents of the file at the specified HTTP[S] URL directly to blob storage, without requiring a temporary local copy to be made. \code{multicopy_url_to_blob} does the same, for multiple URLs at once. These functions have a current file size limit of 256MB.
 }
 \section{AzCopy}{
 
 \code{upload_blob} and \code{download_blob} have the ability to use the AzCopy commandline utility to transfer files, instead of native R code. This can be useful if you want to take advantage of AzCopy's logging and recovery features; it may also be faster in the case of transferring a very large number of small files. To enable this, set the \code{use_azcopy} argument to TRUE.
 
-Note that AzCopy only supports SAS and AAD (OAuth) token as authentication methods. AzCopy also expects a single filename or wildcard spec as its source/destination argument, not a vector of filenames or a connection.
+The following points should be noted about AzCopy:
+\itemize{
+\item It only supports SAS and AAD (OAuth) token as authentication methods. AzCopy also expects a single filename or wildcard spec as its source/destination argument, not a vector of filenames or a connection.
+\item Currently, it does \emph{not} support appending data to existing blobs.
+}
 }
 
 \section{Directories}{
@@ -128,6 +143,11 @@ delete_blob(cont, "bigfile.zip")
 multiupload_blob(cont, "/data/logfiles/*.zip", "/uploaded_data")
 multiupload_blob(cont, "myproj/*")  # no dest directory uploads to root
 multidownload_blob(cont, "jan*.*", "/data/january")
+
+# append blob: concatenating multiple files into one
+upload_blob(cont, "logfile1", "logfile", type="AppendBlob", append=FALSE)
+upload_blob(cont, "logfile2", "logfile", type="AppendBlob", append=TRUE)
+upload_blob(cont, "logfile3", "logfile", type="AppendBlob", append=TRUE)
 
 # you can also pass a vector of file/pathnames as the source and destination
 src <- c("file1.csv", "file2.csv", "file3.csv")
@@ -162,4 +182,5 @@ copy_url_to_blob(cont,
 \link{blob_container}, \link{az_storage}, \link{storage_download}, \link{call_azcopy}
 
 \href{https://github.com/Azure/azure-storage-azcopy}{AzCopy version 10 on GitHub}
+\href{https://docs.microsoft.com/en-us/rest/api/storageservices/understanding-block-blobs--append-blobs--and-page-blobs}{Guide to the different blob types}
 }

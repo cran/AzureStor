@@ -1,88 +1,31 @@
-upload_blob_internal <- function(container, src, dest, type="BlockBlob", blocksize=2^24, lease=NULL)
+upload_blob_internal <- function(container, src, dest, type, blocksize, lease=NULL, put_md5=FALSE, append=FALSE)
 {
-    if(type != "BlockBlob")
-        stop("Only block blobs currently supported")
-
-    src <- normalize_src(src)
+    src <- normalize_src(src, put_md5)
     on.exit(close(src$con))
 
-    headers <- list("x-ms-blob-type"=type)
-    if(!is.null(lease))
-        headers[["x-ms-lease-id"]] <- as.character(lease)
-
-    bar <- storage_progress_bar$new(src$size, "up")
-
-    # upload each block
-    blocklist <- list()
-    base_id <- openssl::md5(dest)
-    i <- 1
-    repeat
-    {
-        body <- readBin(src$con, "raw", blocksize)
-        thisblock <- length(body)
-        if(thisblock == 0)
-            break
-
-        # ensure content-length is never exponential notation
-        headers[["content-length"]] <- sprintf("%.0f", thisblock)
-        id <- openssl::base64_encode(sprintf("%s-%010d", base_id, i))
-        opts <- list(comp="block", blockid=id)
-
-        do_container_op(container, dest, headers=headers, body=body, options=opts, progress=bar$update(),
-                        http_verb="PUT")
-
-        blocklist <- c(blocklist, list(Latest=list(id)))
-        bar$offset <- bar$offset + blocksize
-        i <- i + 1
-    }
-
-    bar$close()
-
-    # update block list
-    body <- as.character(xml2::as_xml_document(list(BlockList=blocklist)))
-    headers <- list("content-length"=sprintf("%.0f", nchar(body)),
-                    "x-ms-blob-content-type"=src$content_type)
-    do_container_op(container, dest, headers=headers, body=body, options=list(comp="blocklist"),
-                    http_verb="PUT")
+    switch(type,
+        "BlockBlob"=upload_block_blob(container, src, dest, blocksize, lease),
+        "AppendBlob"=upload_append_blob(container, src, dest, blocksize, lease, append),
+        stop("Unknown blob type: ", type, call.=FALSE)
+    )
 
     invisible(NULL)
 }
 
 
-download_blob_internal <- function(container, src, dest, blocksize=2^24, overwrite=FALSE, lease=NULL)
+download_blob_internal <- function(container, src, dest, blocksize=2^24, overwrite=FALSE, lease=NULL, check_md5=FALSE)
 {
-    file_dest <- is.character(dest)
-    null_dest <- is.null(dest)
-    conn_dest <- inherits(dest, "rawConnection")
-
-    if(!file_dest && !null_dest && !conn_dest)
-        stop("Unrecognised dest argument", call.=FALSE)
-
     headers <- list()
     if(!is.null(lease))
         headers[["x-ms-lease-id"]] <- as.character(lease)
 
-    if(file_dest)
-    {
-        if(!overwrite && file.exists(dest))
-            stop("Destination file exists and overwrite is FALSE", call.=FALSE)
-        if(!dir.exists(dirname(dest)))
-            dir.create(dirname(dest), recursive=TRUE)
-        dest <- file(dest, "w+b")
-        on.exit(close(dest))
-    }
-    if(null_dest)
-    {
-        dest <- rawConnection(raw(0), "w+b")
-        on.exit(seek(dest, 0))
-    }
-    if(conn_dest)
-        on.exit(seek(dest, 0))
+    dest <- init_download_dest(dest, overwrite)
+    on.exit(dispose_download_dest(dest))
 
-    # get file size (for progress bar)
-    res <- do_container_op(container, src, headers=headers, http_verb="HEAD", http_status_handler="pass")
-    httr::stop_for_status(res, storage_error_message(res))
-    size <- as.numeric(httr::headers(res)[["Content-Length"]])
+    # get file size (for progress bar) and MD5 hash
+    props <- get_storage_properties(container, src)
+    size <- as.numeric(props[["content-length"]])
+    src_md5 <- props[["content-md5"]]
 
     bar <- storage_progress_bar$new(size, "down")
     offset <- 0
@@ -99,5 +42,7 @@ download_blob_internal <- function(container, src, dest, blocksize=2^24, overwri
     }
 
     bar$close()
-    if(null_dest) rawConnectionValue(dest) else invisible(NULL)
+    if(check_md5)
+        do_md5_check(dest, src_md5)
+    if(inherits(dest, "null_dest")) rawConnectionValue(dest) else invisible(NULL)
 }
