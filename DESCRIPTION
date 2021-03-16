@@ -1,6 +1,6 @@
 Package: AzureStor
 Title: Storage Management in 'Azure'
-Version: 3.4.0
+Version: 3.4.1
 Authors@R: c(
     person("Hong", "Ooi", , "hongooi73@gmail.com", role = c("aut", "cre")),
     person("Microsoft", role="cph")
@@ -13,12 +13,13 @@ VignetteBuilder: knitr
 Depends: R (>= 3.3),
 Imports: utils, R6, httr (>= 1.4.0), mime, openssl, xml2, AzureRMR (>=
         2.3.0)
-Suggests: readr, knitr, rmarkdown, jsonlite, testthat, processx
+Suggests: AzureAuth, readr, knitr, rmarkdown, jsonlite, testthat,
+        processx, uuid
 RoxygenNote: 7.1.1
 NeedsCompilation: no
-Packaged: 2021-01-13 21:51:20 UTC; hongo
+Packaged: 2021-03-16 07:41:45 UTC; hongo
 Author: Hong Ooi [aut, cre],
   Microsoft [cph]
 Maintainer: Hong Ooi <hongooi73@gmail.com>
 Repository: CRAN
-Date/Publication: 2021-01-13 22:50:09 UTC
+Date/Publication: 2021-03-16 08:40:06 UTC
