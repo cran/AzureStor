@@ -1,6 +1,6 @@
 Package: AzureStor
 Title: Storage Management in 'Azure'
-Version: 3.5.0
+Version: 3.5.1
 Authors@R: c(
     person("Hong", "Ooi", , "hongooi73@gmail.com", role = c("aut", "cre")),
     person("Microsoft", role="cph")
@@ -17,9 +17,9 @@ Suggests: AzureAuth, readr, knitr, rmarkdown, jsonlite, testthat,
         processx, uuid
 RoxygenNote: 7.1.1
 NeedsCompilation: no
-Packaged: 2021-05-20 07:44:08 UTC; hongo
+Packaged: 2021-08-13 17:08:04 UTC; hongo
 Author: Hong Ooi [aut, cre],
   Microsoft [cph]
 Maintainer: Hong Ooi <hongooi73@gmail.com>
 Repository: CRAN
-Date/Publication: 2021-05-20 16:20:06 UTC
+Date/Publication: 2021-08-13 17:30:06 UTC

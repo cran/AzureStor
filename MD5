@@ -1,8 +1,8 @@
-87114cce9988f64dcceba8466bf3c4fc *DESCRIPTION
+06b8dccaac7bdae97db8a5c6dd06cbab *DESCRIPTION
 fe7c703cf07e6f25fb657bab85bc2d2a *LICENSE
 17a811fa0391ebcb43ac561984790a2b *NAMESPACE
-71816d6dcc62256f49c5ef48e6921d05 *NEWS.md
-5ccc143251e7f9013c5390d0b233ffbe *R/AzureStor.R
+8151d54771a71094c18f020320181de5 *NEWS.md
+6a394f815af5bd59f55c18462420768a *R/AzureStor.R
 2ae79adfe1399e804c6a174efaae3423 *R/add_methods.R
 8690ccf3fc538317fe9f4ca9b4dff521 *R/adls_client_funcs.R
 2f1fef9622f58ec08f0759d0bfcfc252 *R/adls_transfer_internal.R
@@ -23,11 +23,11 @@ dd51747c95f323cbaa23a63f2c863f47 *R/blob_client_funcs.R
 f5b9c0c8c55f9ac70c638357821da2d0 *R/file_transfer_internal.R
 014dc98d814cefc83a38a85f7b72320d *R/progress_bar.R
 8f374c8dafa1cf0786f5c3a43b7e0875 *R/sas.R
-b242aca86ddd0a23b007bd9cd543347b *R/sign_request.R
+20d524b3f533a14e29f2aaf83989869c *R/sign_request.R
 a56fb8b5f503d4cec66e2b45067b73d7 *R/storage_metadata.R
 ca76534b27cdee1bbc78134051957200 *R/storage_properties.R
-70c86b46e3e1edcc2890aa1796c16821 *R/storage_utils.R
-28a5e710397ae3eeeabe68862c993b2b *R/transfer_format_utils.R
+ba108c1bb62a5607fcc321d6bbf73f0c *R/storage_utils.R
+5cc8a631d47121dce2daf84bf7bf59c6 *R/transfer_format_utils.R
 7c45f3237482c18556346cebbdbdc257 *R/transfer_generics.R
 6d007ec77d46890fb83d13d52dd9754f *R/transfer_utils.R
 2a769fb99ec459eacd454030ec65486c *README.md
