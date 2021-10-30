@@ -236,7 +236,7 @@ delete_blob_container.blob_endpoint <- function(endpoint, name, confirm=TRUE, le
 #' @param use_azcopy Whether to use the AzCopy utility from Microsoft to do the transfer, rather than doing it in R.
 #' @param max_concurrent_transfers For `multiupload_blob` and `multidownload_blob`, the maximum number of concurrent file transfers. Each concurrent file transfer requires a separate R process, so limit this if you are low on memory.
 #' @param prefix For `list_blobs`, an alternative way to specify the directory.
-#' @param recursive For the multiupload/download functions, whether to recursively transfer files in subdirectories. For `list_blobs`, whether to include the contents of any subdirectories in the listing. For `delete_blob_dir`, whether to recursively delete subdirectory contents as well (not yet supported).
+#' @param recursive For the multiupload/download functions, whether to recursively transfer files in subdirectories. For `list_blobs`, whether to include the contents of any subdirectories in the listing. For `delete_blob_dir`, whether to recursively delete subdirectory contents as well.
 #' @param put_md5 For uploading, whether to compute the MD5 hash of the blob(s). This will be stored as part of the blob's properties. Only used for block blobs.
 #' @param check_md5 For downloading, whether to verify the MD5 hash of the downloaded blob(s). This requires that the blob's `Content-MD5` property is set. If this is TRUE and the `Content-MD5` property is missing, a warning is generated.
 #'
@@ -263,7 +263,7 @@ delete_blob_container.blob_endpoint <- function(endpoint, name, confirm=TRUE, le
 #'
 #' - The `isdir` column in the data frame output of `list_blobs` is a best guess as to whether an object represents a file or directory, and may not always be correct. Currently, `list_blobs` assumes that any object with a file size of zero is a directory.
 #' - Zero-length files can cause problems for the blob storage service as a whole (not just AzureStor). Try to avoid uploading such files.
-#' - `create_blob_dir` and `delete_blob_dir` function as expected only for accounts with hierarchical namespaces enabled. When this feature is disabled, directories do not exist as objects in their own right: to create a directory, simply upload a blob to that directory. To delete a directory, delete all the blobs within it; as far as the blob storage service is concerned, the directory then no longer exists.
+#' - `create_blob_dir` and `delete_blob_dir` are guaranteed to function as expected only for accounts with hierarchical namespaces enabled. When this feature is disabled, directories do not exist as objects in their own right: to create a directory, simply upload a blob to that directory. To delete a directory, delete all the blobs within it; as far as the blob storage service is concerned, the directory then no longer exists.
 #' - Similarly, the output of `list_blobs(recursive=TRUE)` can vary based on whether the storage account has hierarchical namespaces enabled.
 #'
 #' @return
@@ -364,68 +364,31 @@ list_blobs <- function(container, dir="/", info=c("partial", "name", "all"),
 
         prefix_rows <- lapply(prefixes, function(prefix)
         {
-            data.frame(Type="BlobPrefix",
-                       Name=unlist(prefix$Name),
-                       "Content-Length"=NA,
-                       BlobType=NA,
-                       stringsAsFactors=FALSE,
-                       check.names=FALSE)
+            structure(list(Type="BlobPrefix", Name=unlist(prefix$Name), `Content-Length`=NA, BlobType=NA),
+                      class="data.frame", row.names=c(NA_integer_, -1L))
         })
 
         blob_rows <- lapply(blobs, function(blob)
         {
-            # properties returned can vary for block/append/whatever blobs, and whether HNS is enabled
-            normalize_blob_properties <- function(props)
-            {
-                all_props <- c(
-                    "Creation-Time",
-                    "Last-Modified",
-                    "Etag",
-                    "Content-Length",
-                    "Content-Type",
-                    "Content-Encoding",
-                    "Content-Language",
-                    "Content-CRC64",
-                    "Content-MD5",
-                    "Cache-Control",
-                    "Content-Disposition",
-                    "BlobType",
-                    "AccessTier",
-                    "AccessTierInferred",
-                    "LeaseStatus",
-                    "LeaseState",
-                    "LeaseDuration",
-                    "ServerEncrypted"
-                )
-                props[all_props[!all_props %in% names(props)]] <- NA
-                props
-            }
-
-            props <- c(Type="Blob", Name=blob$Name, normalize_blob_properties(blob$Properties))
-            data.frame(lapply(props, function(p) if(!is_empty(p)) unlist(p) else NA),
-                              stringsAsFactors=FALSE, check.names=FALSE)
+            structure(c(Type="Blob", Name=blob$Name, unlist(blob$Properties)),
+                      class="data.frame", row.names=c(NA_integer_, -1L))
         })
 
-        df_prefixes <- do.call(rbind, prefix_rows)
-        df_blobs <- do.call(rbind, blob_rows)
+        df_prefixes <- do.call(vctrs::vec_rbind, prefix_rows)
+        df_blobs <- do.call(vctrs::vec_rbind, blob_rows)
 
-        if(is.null(df_prefixes) & is.null(df_blobs))
+        no_prefixes <- nrow(df_prefixes) == 0
+        no_blobs <- nrow(df_blobs) == 0
+        if(no_prefixes && no_blobs)
             return(data.frame())
-        else if(is.null(df_prefixes))
+        else if(no_prefixes)
             df <- df_blobs
-        else if(is.null(df_blobs))
+        else if(no_blobs)
             df <- df_prefixes
-        else
-        {
-            missing_cols <- setdiff(colnames(df_blobs), intersect(colnames(df_prefixes), colnames(df_blobs)))
-            df_prefixes[, missing_cols] <- NA
-            df <- rbind(df_prefixes, df_blobs)
-        }
+        else df <- vctrs::vec_rbind(df_prefixes, df_blobs)
 
         if(length(df) > 0)
         {
-            row.names(df) <- NULL
-
             # reorder and rename first 2 columns for consistency with ADLS, file
             ndf <- names(df)
             namecol <- which(ndf == "Name")
@@ -445,7 +408,7 @@ list_blobs <- function(container, dir="/", info=c("partial", "name", "all"),
                     df$`Last-Modified` <- as_datetime(df$`Last-Modified`)
                 if(!is.null(df$`Creation-Time`))
                     df$`Creation-Time` <- as_datetime(df$`Creation-Time`)
-                cbind(df[c(namecol, sizecol, dircol, typecol)], df[-c(namecol, sizecol, dircol, typecol)])
+                vctrs::vec_cbind(df[c(namecol, sizecol, dircol, typecol)], df[-c(namecol, sizecol, dircol, typecol)])
             }
             else df[c(namecol, sizecol, dircol, typecol)]
         }
@@ -537,24 +500,21 @@ create_blob_dir <- function(container, dir)
 #' @export
 delete_blob_dir <- function(container, dir, recursive=FALSE, confirm=TRUE)
 {
-    if(dir %in% c("/", "."))
+    if(dir %in% c("/", ".") && !recursive)
         return(invisible(NULL))
 
     if(!delete_confirmed(confirm, paste0(container$endpoint$url, container$name, "/", dir), "directory"))
         return(invisible(NULL))
 
     if(recursive)
-        stop("Recursive deleting of subdirectory contents not yet supported", call.=FALSE)
-
-    parent <- dirname(dir)
-    if(parent == ".")
-        parent <- "/"
-    lst <- list_blobs(container, parent, recursive=FALSE)
-    whichrow <- which(lst$name == paste0(dir, "/"))
-    if(is_empty(whichrow) || !lst$isdir[whichrow])
-        stop("Not a directory", call.=FALSE)
-
-    delete_blob(container, dir, confirm=FALSE)
+    {
+        # delete everything under this directory
+        conts <- list_blobs(container, dir, recursive=TRUE, info="name")
+        for(n in rev(conts))
+            delete_blob(container, n, confirm=FALSE)
+    }
+    if(dir != "/" && blob_exists(container, dir))
+        delete_blob(container, dir, confirm=FALSE)
 }
 
 #' @rdname blob
