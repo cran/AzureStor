@@ -10,6 +10,7 @@
 \alias{create_blob_dir}
 \alias{delete_blob_dir}
 \alias{blob_exists}
+\alias{blob_dir_exists}
 \alias{copy_url_to_blob}
 \alias{multicopy_url_to_blob}
 \title{Operations on a blob container or blob}
@@ -42,15 +43,18 @@ delete_blob_dir(container, dir, recursive = FALSE, confirm = TRUE)
 
 blob_exists(container, blob)
 
-copy_url_to_blob(container, src, dest, lease = NULL, async = FALSE)
+blob_dir_exists(container, dir)
+
+copy_url_to_blob(container, src, dest, lease = NULL, async = FALSE,
+  auth_header = NULL)
 
 multicopy_url_to_blob(container, src, dest, lease = NULL, async = FALSE,
-  max_concurrent_transfers = 10)
+  max_concurrent_transfers = 10, auth_header = NULL)
 }
 \arguments{
 \item{container}{A blob container object.}
 
-\item{dir}{For \code{list_blobs}, A string naming the directory. Note that blob storage does not support real directories; this argument simply filters the result to return only blobs whose names start with the given value.}
+\item{dir}{For \code{list_blobs}, a string naming the directory. Note that blob storage does not support real directories; this argument simply filters the result to return only blobs whose names start with the given value.}
 
 \item{info}{For \code{list_blobs}, level of detail about each blob to return: a vector of names only; the name, size, blob type, and whether this blob represents a directory; or all information.}
 
@@ -83,6 +87,8 @@ multicopy_url_to_blob(container, src, dest, lease = NULL, async = FALSE,
 \item{confirm}{Whether to ask for confirmation on deleting a blob.}
 
 \item{async}{For \code{copy_url_to_blob} and \code{multicopy_url_to_blob}, whether the copy operation should be asynchronous (proceed in the background).}
+
+\item{auth_header}{For \code{copy_url_to_blob} and \code{multicopy_url_to_blob}, an optional \code{Authorization} HTTP header to send to the source. This allows copying files that are not publicly available or otherwise have access restrictions.}
 }
 \value{
 For \code{list_blobs}, details on the blobs in the container. For \code{download_blob}, if \code{dest=NULL}, the contents of the downloaded blob as a raw vector. For \code{blob_exists} a flag whether the blob exists.
@@ -102,6 +108,8 @@ Upload, download, or delete a blob; list blobs in a container; create or delete 
 \code{upload_blob} and \code{download_blob} can display a progress bar to track the file transfer. You can control whether to display this with \code{options(azure_storage_progress_bar=TRUE|FALSE)}; the default is TRUE.
 
 \code{multiupload_blob} can upload files either as all block blobs or all append blobs, but not a mix of both.
+
+\code{blob_exists} and \code{blob_dir_exists} test for the existence of a blob and directory, respectively.
 
 \code{copy_url_to_blob} transfers the contents of the file at the specified HTTP[S] URL directly to blob storage, without requiring a temporary local copy to be made. \code{multicopy_url_to_blob} does the same, for multiple URLs at once. These functions have a current file size limit of 256MB.
 }
@@ -124,6 +132,7 @@ Blob storage does not have true directories, instead using filenames containing 
 \item Zero-length files can cause problems for the blob storage service as a whole (not just AzureStor). Try to avoid uploading such files.
 \item \code{create_blob_dir} and \code{delete_blob_dir} are guaranteed to function as expected only for accounts with hierarchical namespaces enabled. When this feature is disabled, directories do not exist as objects in their own right: to create a directory, simply upload a blob to that directory. To delete a directory, delete all the blobs within it; as far as the blob storage service is concerned, the directory then no longer exists.
 \item Similarly, the output of \code{list_blobs(recursive=TRUE)} can vary based on whether the storage account has hierarchical namespaces enabled.
+\item \code{blob_exists} will return FALSE for a directory when the storage account does not have hierarchical namespaces enabled.
 }
 }
 
