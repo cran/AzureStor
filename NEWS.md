@@ -1,3 +1,8 @@
+# AzureStor 3.6.1
+
+- Fix an issue when authenticating with a SAS and the connection is retried.
+- Fix a bug in listing storage files under ADLSgen2 introduced in the previous version (#109).
+
 # AzureStor 3.6.0
 
 - Add a `storage_dir_exists` generic to check for existence of a directory. This dispatches to the service-specific methods `blob_dir_exists`, `azure_dir_exists` and `adls_dir_exists`.

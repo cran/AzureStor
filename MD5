@@ -1,7 +1,7 @@
-317e415fc73f8dab2398cc10cd4c1d19 *DESCRIPTION
+841a99478e7174f5950d10adcd055ef3 *DESCRIPTION
 fe7c703cf07e6f25fb657bab85bc2d2a *LICENSE
 d113763646117607807cabd2f97742f4 *NAMESPACE
-f0d41e33442124e5444a3032ede6e176 *NEWS.md
+8e0982fd3841f2d825debdb014ebf8cd *NEWS.md
 25626b072e7f94983650d24aef481abe *R/AzureStor.R
 5fd17a581405401857fa9ac12998e066 *R/add_methods.R
 d456634a58497f3dccb6e04d6ca73445 *R/adls_client_funcs.R
@@ -26,7 +26,7 @@ f5b9c0c8c55f9ac70c638357821da2d0 *R/file_transfer_internal.R
 20d524b3f533a14e29f2aaf83989869c *R/sign_request.R
 a56fb8b5f503d4cec66e2b45067b73d7 *R/storage_metadata.R
 ca76534b27cdee1bbc78134051957200 *R/storage_properties.R
-87139dee9debb7c581cdf0bb2788561f *R/storage_utils.R
+1840f8311fcf5737273c6cbb2c182dd7 *R/storage_utils.R
 5cc8a631d47121dce2daf84bf7bf59c6 *R/transfer_format_utils.R
 7c45f3237482c18556346cebbdbdc257 *R/transfer_generics.R
 6d007ec77d46890fb83d13d52dd9754f *R/transfer_utils.R
