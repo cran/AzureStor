@@ -39,12 +39,12 @@
 #' [blob_endpoint], [file_endpoint],
 #' [Date], [POSIXt]
 #'
-#' [Azure Storage Provider API reference](https://docs.microsoft.com/en-us/rest/api/storagerp/),
-#' [Azure Storage Services API reference](https://docs.microsoft.com/en-us/rest/api/storageservices/)
+#' [Azure Storage Provider API reference](https://learn.microsoft.com/en-us/rest/api/storagerp/),
+#' [Azure Storage Services API reference](https://learn.microsoft.com/en-us/rest/api/storageservices/)
 #'
-#' [Create an account SAS](https://docs.microsoft.com/en-us/rest/api/storageservices/create-account-sas),
-#' [Create a user delegation SAS](https://docs.microsoft.com/en-us/rest/api/storageservices/create-user-delegation-sas),
-#' [Create a service SAS](https://docs.microsoft.com/en-us/rest/api/storageservices/create-service-sas)
+#' [Create an account SAS](https://learn.microsoft.com/en-us/rest/api/storageservices/create-account-sas),
+#' [Create a user delegation SAS](https://learn.microsoft.com/en-us/rest/api/storageservices/create-user-delegation-sas),
+#' [Create a service SAS](https://learn.microsoft.com/en-us/rest/api/storageservices/create-service-sas)
 #'
 #' @examples
 #' # account SAS valid for 7 days
@@ -257,7 +257,8 @@ get_user_delegation_sas.default <- function(account, key, resource, start=NULL, 
         auth_api_version,
         resource_type,
         snapshot_time,
-        "",
+        "",  # ses not yet implemented
+        "",  # rscc, rscd, rsce, rscl, rsct not yet implemented
         "",
         "",
         "",
@@ -350,6 +351,7 @@ get_service_sas.default <- function(account, resource, key, service, start=NULL,
             auth_api_version,
             resource_type,
             snapshot_time,
+            "",  # ses not yet implemented
             "",  # rscc, rscd, rsce, rscl, rsct not yet implemented
             "",
             "",
@@ -366,6 +368,7 @@ get_service_sas.default <- function(account, resource, key, service, start=NULL,
         ip,
         protocol,
         auth_api_version,
+        "",  # ses not yet implemented
         "",  # rscc, rscd, rsce, rscl, rsct not yet implemented
         "",
         "",

@@ -15,74 +15,103 @@
 
 <title>Introduction to AzureStor</title>
 
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
 
 
-<style type="text/css">code{white-space: pre;}</style>
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
 <style type="text/css" data-origin="pandoc">
-code.sourceCode > span { display: inline-block; line-height: 1.25; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-code.sourceCode > span:empty { height: 1.2em; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
-code.sourceCode { white-space: pre; position: relative; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
 div.sourceCode { margin: 1em 0; }
 pre.sourceCode { margin: 0; }
 @media screen {
 div.sourceCode { overflow: auto; }
 }
 @media print {
-code.sourceCode { white-space: pre-wrap; }
-code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
-  { counter-reset: source-line 0; }
+{ counter-reset: source-line 0; }
 pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
+{ position: relative; left: -4em; counter-increment: source-line; }
 pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-    color: #aaaaaa;
-  }
-pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
 }
-code span.al { color: #ff0000; font-weight: bold; } /* Alert */
-code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
-code span.at { color: #7d9029; } /* Attribute */
-code span.bn { color: #40a070; } /* BaseN */
-code span.bu { } /* BuiltIn */
-code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
-code span.ch { color: #4070a0; } /* Char */
-code span.cn { color: #880000; } /* Constant */
-code span.co { color: #60a0b0; font-style: italic; } /* Comment */
-code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
-code span.do { color: #ba2121; font-style: italic; } /* Documentation */
-code span.dt { color: #902000; } /* DataType */
-code span.dv { color: #40a070; } /* DecVal */
-code span.er { color: #ff0000; font-weight: bold; } /* Error */
-code span.ex { } /* Extension */
-code span.fl { color: #40a070; } /* Float */
-code span.fu { color: #06287e; } /* Function */
-code span.im { } /* Import */
-code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
-code span.kw { color: #007020; font-weight: bold; } /* Keyword */
-code span.op { color: #666666; } /* Operator */
-code span.ot { color: #007020; } /* Other */
-code span.pp { color: #bc7a00; } /* Preprocessor */
-code span.sc { color: #4070a0; } /* SpecialChar */
-code span.ss { color: #bb6688; } /* SpecialString */
-code span.st { color: #4070a0; } /* String */
-code span.va { color: #19177c; } /* Variable */
-code span.vs { color: #4070a0; } /* VerbatimString */
-code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
-
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
 </style>
 <script>
 // apply pandoc div.sourceCode style to pre.sourceCode instead
@@ -91,13 +120,20 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   for (var i = 0; i < sheets.length; i++) {
     if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
     try { var rules = sheets[i].cssRules; } catch (e) { continue; }
-    for (var j = 0; j < rules.length; j++) {
+    var j = 0;
+    while (j < rules.length) {
       var rule = rules[j];
       // check if there is a div.sourceCode rule
-      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
       var style = rule.style.cssText;
       // check if color or background-color is set
-      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
       // replace div.sourceCode by a pre.sourceCode rule
       sheets[i].deleteRule(j);
       sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
@@ -105,6 +141,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   }
 })();
 </script>
+
 
 
 
@@ -308,229 +345,288 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <p>This is a short introduction on how to use AzureStor.</p>
 <div id="storage-endpoints" class="section level2">
 <h2>Storage endpoints</h2>
-<p>The interface for accessing storage is similar across blobs, files and ADLSGen2. You call the <code>storage_endpoint</code> function and provide the endpoint URI, along with your authentication credentials. AzureStor will figure out the type of storage from the URI.</p>
-<p>AzureStor supports all the different ways you can authenticate with a storage endpoint:</p>
+<p>The interface for accessing storage is similar across blobs, files
+and ADLSGen2. You call the <code>storage_endpoint</code> function and
+provide the endpoint URI, along with your authentication credentials.
+AzureStor will figure out the type of storage from the URI.</p>
+<p>AzureStor supports all the different ways you can authenticate with a
+storage endpoint:</p>
 <ul>
-<li>Blob storage supports authenticating with an access key, shared access signature (SAS), or an Azure Active Directory (AAD) OAuth token;</li>
+<li>Blob storage supports authenticating with an access key, shared
+access signature (SAS), or an Azure Active Directory (AAD) OAuth
+token;</li>
 <li>File storage supports access key and SAS;</li>
 <li>ADLSgen2 supports access key and AAD token.</li>
 </ul>
-<p>In the case of an AAD token, you can also provide an object obtained via <code>AzureAuth::get_azure_token()</code>. If you do this, AzureStor can automatically refresh the token for you when it expires.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="co"># various endpoints for an account: blob, file, ADLS2</span></span>
-<span id="cb1-2"><a href="#cb1-2"></a>bl_endp_key &lt;-<span class="st"> </span><span class="kw">storage_endpoint</span>(<span class="st">&quot;https://mystorage.blob.core.windows.net&quot;</span>, <span class="dt">key=</span><span class="st">&quot;access_key&quot;</span>)</span>
-<span id="cb1-3"><a href="#cb1-3"></a>fl_endp_sas &lt;-<span class="st"> </span><span class="kw">storage_endpoint</span>(<span class="st">&quot;https://mystorage.file.core.windows.net&quot;</span>, <span class="dt">sas=</span><span class="st">&quot;my_sas&quot;</span>)</span>
-<span id="cb1-4"><a href="#cb1-4"></a>ad_endp_tok &lt;-<span class="st"> </span><span class="kw">storage_endpoint</span>(<span class="st">&quot;https://mystorage.dfs.core.windows.net&quot;</span>, <span class="dt">token=</span><span class="st">&quot;my_token&quot;</span>)</span>
-<span id="cb1-5"><a href="#cb1-5"></a></span>
-<span id="cb1-6"><a href="#cb1-6"></a><span class="co"># alternative (recommended) way of supplying an AAD token</span></span>
-<span id="cb1-7"><a href="#cb1-7"></a>token &lt;-<span class="st"> </span>AzureRMR<span class="op">::</span><span class="kw">get_azure_token</span>(<span class="st">&quot;https://storage.azure.com&quot;</span>,</span>
-<span id="cb1-8"><a href="#cb1-8"></a>                                   <span class="dt">tenant=</span><span class="st">&quot;myaadtenant&quot;</span>, <span class="dt">app=</span><span class="st">&quot;app_id&quot;</span>, <span class="dt">password=</span><span class="st">&quot;mypassword&quot;</span>)<span class="er">)</span></span>
-<span id="cb1-9"><a href="#cb1-9"></a>ad_endp_tok2 &lt;-<span class="st"> </span><span class="kw">storage_endpoint</span>(<span class="st">&quot;https://mystorage.dfs.core.windows.net&quot;</span>, <span class="dt">token=</span>token)</span></code></pre></div>
+<p>In the case of an AAD token, you can also provide an object obtained
+via <code>AzureAuth::get_azure_token()</code>. If you do this, AzureStor
+can automatically refresh the token for you when it expires.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="co"># various endpoints for an account: blob, file, ADLS2</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>bl_endp_key <span class="ot">&lt;-</span> <span class="fu">storage_endpoint</span>(<span class="st">&quot;https://mystorage.blob.core.windows.net&quot;</span>, <span class="at">key=</span><span class="st">&quot;access_key&quot;</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>fl_endp_sas <span class="ot">&lt;-</span> <span class="fu">storage_endpoint</span>(<span class="st">&quot;https://mystorage.file.core.windows.net&quot;</span>, <span class="at">sas=</span><span class="st">&quot;my_sas&quot;</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>ad_endp_tok <span class="ot">&lt;-</span> <span class="fu">storage_endpoint</span>(<span class="st">&quot;https://mystorage.dfs.core.windows.net&quot;</span>, <span class="at">token=</span><span class="st">&quot;my_token&quot;</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="co"># alternative (recommended) way of supplying an AAD token</span></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>token <span class="ot">&lt;-</span> AzureRMR<span class="sc">::</span><span class="fu">get_azure_token</span>(<span class="st">&quot;https://storage.azure.com&quot;</span>,</span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>                                   <span class="at">tenant=</span><span class="st">&quot;myaadtenant&quot;</span>, <span class="at">app=</span><span class="st">&quot;app_id&quot;</span>, <span class="at">password=</span><span class="st">&quot;mypassword&quot;</span>)<span class="er">)</span></span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a>ad_endp_tok2 <span class="ot">&lt;-</span> <span class="fu">storage_endpoint</span>(<span class="st">&quot;https://mystorage.dfs.core.windows.net&quot;</span>, <span class="at">token=</span>token)</span></code></pre></div>
 </div>
 <div id="listing-creating-and-deleting-containers" class="section level2">
 <h2>Listing, creating and deleting containers</h2>
-<p>AzureStor provides a rich framework for managing storage. The following generics allow you to manage storage containers:</p>
+<p>AzureStor provides a rich framework for managing storage. The
+following generics allow you to manage storage containers:</p>
 <ul>
-<li><code>storage_container</code>: get a storage container (blob container, file share or ADLS filesystem)</li>
+<li><code>storage_container</code>: get a storage container (blob
+container, file share or ADLS filesystem)</li>
 <li><code>create_storage_container</code></li>
 <li><code>delete_storage_container</code></li>
 <li><code>list_storage_containers</code></li>
 </ul>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="co"># example of working with containers (blob storage)</span></span>
-<span id="cb2-2"><a href="#cb2-2"></a><span class="kw">list_storage_containers</span>(bl_endp_key)</span>
-<span id="cb2-3"><a href="#cb2-3"></a>cont &lt;-<span class="st"> </span><span class="kw">storage_container</span>(bl_endp_key, <span class="st">&quot;mycontainer&quot;</span>)</span>
-<span id="cb2-4"><a href="#cb2-4"></a>newcont &lt;-<span class="st"> </span><span class="kw">create_storage_container</span>(bl_endp_key, <span class="st">&quot;newcontainer&quot;</span>)</span>
-<span id="cb2-5"><a href="#cb2-5"></a><span class="kw">delete_storage_container</span>(newcont)</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># example of working with containers (blob storage)</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="fu">list_storage_containers</span>(bl_endp_key)</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>cont <span class="ot">&lt;-</span> <span class="fu">storage_container</span>(bl_endp_key, <span class="st">&quot;mycontainer&quot;</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>newcont <span class="ot">&lt;-</span> <span class="fu">create_storage_container</span>(bl_endp_key, <span class="st">&quot;newcontainer&quot;</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="fu">delete_storage_container</span>(newcont)</span></code></pre></div>
 </div>
 <div id="files-and-blobs" class="section level2">
 <h2>Files and blobs</h2>
-<p>These functions for working with objects within a storage container:</p>
+<p>These functions for working with objects within a storage
+container:</p>
 <ul>
-<li><code>list_storage_files</code>: list files/blobs in a directory (for ADLSgen2 and file storage) or blob container</li>
-<li><code>create_storage_dir</code>: for ADLSgen2 and file storage, create a directory</li>
-<li><code>delete_storage_dir</code>: for ADLSgen2 and file storage, delete a directory</li>
+<li><code>list_storage_files</code>: list files/blobs in a directory
+(for ADLSgen2 and file storage) or blob container</li>
+<li><code>create_storage_dir</code>: for ADLSgen2 and file storage,
+create a directory</li>
+<li><code>delete_storage_dir</code>: for ADLSgen2 and file storage,
+delete a directory</li>
 <li><code>delete_storage_file</code>: delete a file or blob</li>
-<li><code>storage_file_exists</code>: check that a file or blob exists</li>
-<li><code>storage_upload</code>/<code>storage_download</code>: transfer a file to or from a storage container</li>
-<li><code>storage_multiupload</code>/<code>storage_multidownload</code>: transfer multiple files in parallel to or from a storage container</li>
+<li><code>storage_file_exists</code>: check that a file or blob
+exists</li>
+<li><code>storage_upload</code>/<code>storage_download</code>: transfer
+a file to or from a storage container</li>
+<li><code>storage_multiupload</code>/<code>storage_multidownload</code>:
+transfer multiple files in parallel to or from a storage container</li>
 </ul>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="co"># example of working with files and directories (ADLSgen2)</span></span>
-<span id="cb3-2"><a href="#cb3-2"></a>cont &lt;-<span class="st"> </span><span class="kw">storage_container</span>(ad_end_tok, <span class="st">&quot;myfilesystem&quot;</span>)</span>
-<span id="cb3-3"><a href="#cb3-3"></a><span class="kw">list_storage_files</span>(cont)</span>
-<span id="cb3-4"><a href="#cb3-4"></a><span class="kw">create_storage_dir</span>(cont, <span class="st">&quot;newdir&quot;</span>)</span>
-<span id="cb3-5"><a href="#cb3-5"></a><span class="kw">storage_download</span>(cont, <span class="st">&quot;/readme.txt&quot;</span>)</span>
-<span id="cb3-6"><a href="#cb3-6"></a><span class="kw">storage_multiupload</span>(cont, <span class="st">&quot;N:/data/*.*&quot;</span>, <span class="st">&quot;newdir&quot;</span>)  <span class="co"># uploading everything in a directory</span></span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># example of working with files and directories (ADLSgen2)</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>cont <span class="ot">&lt;-</span> <span class="fu">storage_container</span>(ad_end_tok, <span class="st">&quot;myfilesystem&quot;</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="fu">list_storage_files</span>(cont)</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="fu">create_storage_dir</span>(cont, <span class="st">&quot;newdir&quot;</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="fu">storage_download</span>(cont, <span class="st">&quot;/readme.txt&quot;</span>)</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="fu">storage_multiupload</span>(cont, <span class="st">&quot;N:/data/*.*&quot;</span>, <span class="st">&quot;newdir&quot;</span>)  <span class="co"># uploading everything in a directory</span></span></code></pre></div>
 </div>
 <div id="uploading-and-downloading" class="section level2">
 <h2>Uploading and downloading</h2>
-<p>AzureStor includes a number of extra features to make transferring files efficient.</p>
+<p>AzureStor includes a number of extra features to make transferring
+files efficient.</p>
 <div id="parallel-connections" class="section level3">
 <h3>Parallel connections</h3>
-<p>The <code>storage_multiupload/download</code> functions transfer multiple files in parallel, which usually results in major speedups when transferring multiple small files. The pool is created the first time a parallel file transfer is performed, and persists for the duration of the R session; this means you don’t have to wait for the pool to be (re-)created each time.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="co"># uploading/downloading multiple files at once: use a wildcard to specify files to transfer</span></span>
-<span id="cb4-2"><a href="#cb4-2"></a><span class="kw">storage_multiupload</span>(cont, <span class="dt">src=</span><span class="st">&quot;N:/logfiles/*.zip&quot;</span>)</span>
-<span id="cb4-3"><a href="#cb4-3"></a><span class="kw">storage_multidownload</span>(cont, <span class="dt">src=</span><span class="st">&quot;/monthly/jan*.*&quot;</span>, <span class="dt">dest=</span><span class="st">&quot;~/data/january&quot;</span>)</span>
-<span id="cb4-4"><a href="#cb4-4"></a></span>
-<span id="cb4-5"><a href="#cb4-5"></a><span class="co"># or supply a vector of file specs as the source and destination</span></span>
-<span id="cb4-6"><a href="#cb4-6"></a>src &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;file1.csv&quot;</span>, <span class="st">&quot;file2.csv&quot;</span>, <span class="st">&quot;file3.csv&quot;</span>)</span>
-<span id="cb4-7"><a href="#cb4-7"></a>dest &lt;-<span class="st"> </span><span class="kw">file.path</span>(<span class="st">&quot;data/&quot;</span>, src)</span>
-<span id="cb4-8"><a href="#cb4-8"></a><span class="kw">storage_multiupload</span>(cont, src, dest)</span></code></pre></div>
+<p>The <code>storage_multiupload/download</code> functions transfer
+multiple files in parallel, which usually results in major speedups when
+transferring multiple small files. The pool is created the first time a
+parallel file transfer is performed, and persists for the duration of
+the R session; this means you don’t have to wait for the pool to be
+(re-)created each time.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># uploading/downloading multiple files at once: use a wildcard to specify files to transfer</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="fu">storage_multiupload</span>(cont, <span class="at">src=</span><span class="st">&quot;N:/logfiles/*.zip&quot;</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="fu">storage_multidownload</span>(cont, <span class="at">src=</span><span class="st">&quot;/monthly/jan*.*&quot;</span>, <span class="at">dest=</span><span class="st">&quot;~/data/january&quot;</span>)</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co"># or supply a vector of file specs as the source and destination</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>src <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;file1.csv&quot;</span>, <span class="st">&quot;file2.csv&quot;</span>, <span class="st">&quot;file3.csv&quot;</span>)</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>dest <span class="ot">&lt;-</span> <span class="fu">file.path</span>(<span class="st">&quot;data/&quot;</span>, src)</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="fu">storage_multiupload</span>(cont, src, dest)</span></code></pre></div>
 </div>
 <div id="file-format-helpers" class="section level3">
 <h3>File format helpers</h3>
-<p>AzureStor includes convenience functions to transfer data in a number of commonly used formats: RDS, RData, TSV (tab-delimited), CSV, and CSV2 (semicolon-delimited). These work via connections and so don’t create temporary files on disk.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a><span class="co"># save an R object to storage and read it back again</span></span>
-<span id="cb5-2"><a href="#cb5-2"></a>obj &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">n=</span>42L, <span class="dt">x=</span>pi, <span class="dt">c=</span><span class="st">&quot;foo&quot;</span>)</span>
-<span id="cb5-3"><a href="#cb5-3"></a><span class="kw">storage_save_rds</span>(obj, cont, <span class="st">&quot;obj.rds&quot;</span>)</span>
-<span id="cb5-4"><a href="#cb5-4"></a>objnew &lt;-<span class="st"> </span><span class="kw">storage_load_rds</span>(cont, <span class="st">&quot;obj.rds&quot;</span>)</span>
-<span id="cb5-5"><a href="#cb5-5"></a><span class="kw">identical</span>(obj, objnew)  <span class="co"># TRUE</span></span>
-<span id="cb5-6"><a href="#cb5-6"></a></span>
-<span id="cb5-7"><a href="#cb5-7"></a><span class="co"># reading/writing data to CSV format</span></span>
-<span id="cb5-8"><a href="#cb5-8"></a><span class="kw">storage_write_csv</span>(mtcars, cont, <span class="st">&quot;mtcars.csv&quot;</span>)</span>
-<span id="cb5-9"><a href="#cb5-9"></a>mtnew &lt;-<span class="st"> </span><span class="kw">storage_read_csv</span>(cont, <span class="st">&quot;mtcars.csv&quot;</span>)</span>
-<span id="cb5-10"><a href="#cb5-10"></a><span class="kw">all</span>(<span class="kw">mapply</span>(identical, mtcars, mtnew))  <span class="co"># TRUE</span></span></code></pre></div>
+<p>AzureStor includes convenience functions to transfer data in a number
+of commonly used formats: RDS, RData, TSV (tab-delimited), CSV, and CSV2
+(semicolon-delimited). These work via connections and so don’t create
+temporary files on disk.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># save an R object to storage and read it back again</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>obj <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">n=</span>42L, <span class="at">x=</span>pi, <span class="at">c=</span><span class="st">&quot;foo&quot;</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="fu">storage_save_rds</span>(obj, cont, <span class="st">&quot;obj.rds&quot;</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>objnew <span class="ot">&lt;-</span> <span class="fu">storage_load_rds</span>(cont, <span class="st">&quot;obj.rds&quot;</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="fu">identical</span>(obj, objnew)  <span class="co"># TRUE</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co"># reading/writing data to CSV format</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="fu">storage_write_csv</span>(mtcars, cont, <span class="st">&quot;mtcars.csv&quot;</span>)</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>mtnew <span class="ot">&lt;-</span> <span class="fu">storage_read_csv</span>(cont, <span class="st">&quot;mtcars.csv&quot;</span>)</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">mapply</span>(identical, mtcars, mtnew))  <span class="co"># TRUE</span></span></code></pre></div>
 </div>
 <div id="transfer-to-and-from-connections" class="section level3">
 <h3>Transfer to and from connections</h3>
-<p>You can upload a (single) in-memory R object via a connection, and similarly, you can download a file to a connection, or return it as a raw vector. This lets you transfer an object without having to create a temporary file as an intermediate step.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="co"># uploading serialized R objects via connections</span></span>
-<span id="cb6-2"><a href="#cb6-2"></a>json &lt;-<span class="st"> </span>jsonlite<span class="op">::</span><span class="kw">toJSON</span>(iris, <span class="dt">pretty=</span><span class="ot">TRUE</span>, <span class="dt">auto_unbox=</span><span class="ot">TRUE</span>)</span>
-<span id="cb6-3"><a href="#cb6-3"></a>con &lt;-<span class="st"> </span><span class="kw">textConnection</span>(json)</span>
-<span id="cb6-4"><a href="#cb6-4"></a><span class="kw">storage_upload</span>(cont, <span class="dt">src=</span>con, <span class="dt">dest=</span><span class="st">&quot;iris.json&quot;</span>)</span>
-<span id="cb6-5"><a href="#cb6-5"></a></span>
-<span id="cb6-6"><a href="#cb6-6"></a>rds &lt;-<span class="st"> </span><span class="kw">serialize</span>(iris, <span class="ot">NULL</span>)</span>
-<span id="cb6-7"><a href="#cb6-7"></a>con &lt;-<span class="st"> </span><span class="kw">rawConnection</span>(rds)</span>
-<span id="cb6-8"><a href="#cb6-8"></a><span class="kw">storage_upload</span>(cont, <span class="dt">src=</span>con, <span class="dt">dest=</span><span class="st">&quot;iris.rds&quot;</span>)</span>
-<span id="cb6-9"><a href="#cb6-9"></a></span>
-<span id="cb6-10"><a href="#cb6-10"></a><span class="co"># downloading files into memory: as a raw vector with dest=NULL, and via a connection</span></span>
-<span id="cb6-11"><a href="#cb6-11"></a>rawvec &lt;-<span class="st"> </span><span class="kw">storage_download</span>(cont, <span class="dt">src=</span><span class="st">&quot;iris.json&quot;</span>, <span class="dt">dest=</span><span class="ot">NULL</span>)</span>
-<span id="cb6-12"><a href="#cb6-12"></a><span class="kw">rawToChar</span>(rawvec)</span>
-<span id="cb6-13"><a href="#cb6-13"></a></span>
-<span id="cb6-14"><a href="#cb6-14"></a>con &lt;-<span class="st"> </span><span class="kw">rawConnection</span>(<span class="kw">raw</span>(<span class="dv">0</span>), <span class="st">&quot;r+&quot;</span>)</span>
-<span id="cb6-15"><a href="#cb6-15"></a><span class="kw">storage_download</span>(cont, <span class="dt">src=</span><span class="st">&quot;iris.rds&quot;</span>, <span class="dt">dest=</span>con)</span>
-<span id="cb6-16"><a href="#cb6-16"></a><span class="kw">unserialize</span>(con)</span></code></pre></div>
+<p>You can upload a (single) in-memory R object via a connection, and
+similarly, you can download a file to a connection, or return it as a
+raw vector. This lets you transfer an object without having to create a
+temporary file as an intermediate step.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># uploading serialized R objects via connections</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>json <span class="ot">&lt;-</span> jsonlite<span class="sc">::</span><span class="fu">toJSON</span>(iris, <span class="at">pretty=</span><span class="cn">TRUE</span>, <span class="at">auto_unbox=</span><span class="cn">TRUE</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>con <span class="ot">&lt;-</span> <span class="fu">textConnection</span>(json)</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="fu">storage_upload</span>(cont, <span class="at">src=</span>con, <span class="at">dest=</span><span class="st">&quot;iris.json&quot;</span>)</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>rds <span class="ot">&lt;-</span> <span class="fu">serialize</span>(iris, <span class="cn">NULL</span>)</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>con <span class="ot">&lt;-</span> <span class="fu">rawConnection</span>(rds)</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="fu">storage_upload</span>(cont, <span class="at">src=</span>con, <span class="at">dest=</span><span class="st">&quot;iris.rds&quot;</span>)</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="co"># downloading files into memory: as a raw vector with dest=NULL, and via a connection</span></span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>rawvec <span class="ot">&lt;-</span> <span class="fu">storage_download</span>(cont, <span class="at">src=</span><span class="st">&quot;iris.json&quot;</span>, <span class="at">dest=</span><span class="cn">NULL</span>)</span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="fu">rawToChar</span>(rawvec)</span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a></span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a>con <span class="ot">&lt;-</span> <span class="fu">rawConnection</span>(<span class="fu">raw</span>(<span class="dv">0</span>), <span class="st">&quot;r+&quot;</span>)</span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a><span class="fu">storage_download</span>(cont, <span class="at">src=</span><span class="st">&quot;iris.rds&quot;</span>, <span class="at">dest=</span>con)</span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a><span class="fu">unserialize</span>(con)</span></code></pre></div>
 </div>
 <div id="copy-from-urls-blob-storage-only" class="section level3">
 <h3>Copy from URLs (blob storage only)</h3>
-<p>The <code>copy_url_to_storage</code> function lets you transfer the contents of a URL directly to storage, without having to download it to your local machine first. The <code>multicopy_url_to_storage</code> function does the same, but for a vector of URLs. Currently, these only work for blob storage.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="co"># copy from a public URL: Iris data from UCI machine learning repository</span></span>
-<span id="cb7-2"><a href="#cb7-2"></a><span class="kw">copy_url_to_storage</span>(cont,</span>
-<span id="cb7-3"><a href="#cb7-3"></a>    <span class="st">&quot;https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data&quot;</span>,</span>
-<span id="cb7-4"><a href="#cb7-4"></a>    <span class="st">&quot;iris.csv&quot;</span>)</span>
-<span id="cb7-5"><a href="#cb7-5"></a></span>
-<span id="cb7-6"><a href="#cb7-6"></a><span class="co"># copying files from another storage account, by appending a SAS to the URL(s)</span></span>
-<span id="cb7-7"><a href="#cb7-7"></a>sas &lt;-<span class="st"> &quot;?sv=....&quot;</span></span>
-<span id="cb7-8"><a href="#cb7-8"></a>files &lt;-<span class="st"> </span><span class="kw">paste0</span>(<span class="st">&quot;https://srcstorage.blob.core.windows.net/container/file&quot;</span>, <span class="dv">0</span><span class="op">:</span><span class="dv">9</span>, <span class="st">&quot;.csv&quot;</span>, sas)</span>
-<span id="cb7-9"><a href="#cb7-9"></a><span class="kw">multicopy_url_to_storage</span>(cont, files)</span></code></pre></div>
+<p>The <code>copy_url_to_storage</code> function lets you transfer the
+contents of a URL directly to storage, without having to download it to
+your local machine first. The <code>multicopy_url_to_storage</code>
+function does the same, but for a vector of URLs. Currently, these only
+work for blob storage.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># copy from a public URL: Iris data from UCI machine learning repository</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="fu">copy_url_to_storage</span>(cont,</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>    <span class="st">&quot;https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data&quot;</span>,</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>    <span class="st">&quot;iris.csv&quot;</span>)</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="co"># copying files from another storage account, by appending a SAS to the URL(s)</span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>sas <span class="ot">&lt;-</span> <span class="st">&quot;?sv=....&quot;</span></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>files <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;https://srcstorage.blob.core.windows.net/container/file&quot;</span>, <span class="dv">0</span><span class="sc">:</span><span class="dv">9</span>, <span class="st">&quot;.csv&quot;</span>, sas)</span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="fu">multicopy_url_to_storage</span>(cont, files)</span></code></pre></div>
 </div>
 <div id="appending-blob-storage-only" class="section level3">
 <h3>Appending (blob storage only)</h3>
-<p>AzureStor supports uploading to append blobs. An append blob is comprised of blocks and is optimized for append operations; it is well suited for data that is constantly growing, but should not be modified once written, such as server logs.</p>
-<p>To upload to an append blob, specify <code>type=&quot;AppendBlob&quot;</code> in the <code>storage_upload</code> call. To append data (rather than overwriting an existing blob), include the argument <code>append=TRUE</code>. See <code>?upload_blob</code> for more details.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a><span class="co"># create a new append blob</span></span>
-<span id="cb8-2"><a href="#cb8-2"></a><span class="kw">storage_upload</span>(cont, <span class="dt">src=</span><span class="st">&quot;logfile1.csv&quot;</span>, <span class="dt">dest=</span><span class="st">&quot;logfile.csv&quot;</span>, <span class="dt">type=</span><span class="st">&quot;AppendBlob&quot;</span>)</span>
-<span id="cb8-3"><a href="#cb8-3"></a></span>
-<span id="cb8-4"><a href="#cb8-4"></a><span class="co"># appending to an existing blob</span></span>
-<span id="cb8-5"><a href="#cb8-5"></a><span class="kw">storage_upload</span>(cont, <span class="dt">src=</span><span class="st">&quot;logfile2.csv&quot;</span>, <span class="dt">dest=</span><span class="st">&quot;logfile.csv&quot;</span>, <span class="dt">type=</span><span class="st">&quot;AppendBlob&quot;</span>, <span class="dt">append=</span><span class="ot">TRUE</span>)</span></code></pre></div>
+<p>AzureStor supports uploading to append blobs. An append blob is
+comprised of blocks and is optimized for append operations; it is well
+suited for data that is constantly growing, but should not be modified
+once written, such as server logs.</p>
+<p>To upload to an append blob, specify <code>type=&quot;AppendBlob&quot;</code>
+in the <code>storage_upload</code> call. To append data (rather than
+overwriting an existing blob), include the argument
+<code>append=TRUE</code>. See <code>?upload_blob</code> for more
+details.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># create a new append blob</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="fu">storage_upload</span>(cont, <span class="at">src=</span><span class="st">&quot;logfile1.csv&quot;</span>, <span class="at">dest=</span><span class="st">&quot;logfile.csv&quot;</span>, <span class="at">type=</span><span class="st">&quot;AppendBlob&quot;</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co"># appending to an existing blob</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="fu">storage_upload</span>(cont, <span class="at">src=</span><span class="st">&quot;logfile2.csv&quot;</span>, <span class="at">dest=</span><span class="st">&quot;logfile.csv&quot;</span>, <span class="at">type=</span><span class="st">&quot;AppendBlob&quot;</span>, <span class="at">append=</span><span class="cn">TRUE</span>)</span></code></pre></div>
 </div>
 <div id="interface-to-azcopy" class="section level3">
 <h3>Interface to AzCopy</h3>
-<p>AzureStor includes an interface to <a href="https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-v10">AzCopy</a>, Microsoft’s high-performance commandline utility for copying files to and from storage. To take advantage of this, simply include the argument <code>use_azcopy=TRUE</code> on any upload or download function. AzureStor will then call AzCopy to perform the file transfer, rather than using its own internal code. In addition, a <code>call_azcopy</code> function is provided to let you use AzCopy for any task.</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a><span class="co"># use azcopy to download</span></span>
-<span id="cb9-2"><a href="#cb9-2"></a>myfs &lt;-<span class="st"> </span><span class="kw">storage_container</span>(ad_endp, <span class="st">&quot;myfilesystem&quot;</span>)</span>
-<span id="cb9-3"><a href="#cb9-3"></a><span class="kw">storage_download</span>(myfs, <span class="st">&quot;/incoming/bigfile.tar.gz&quot;</span>, <span class="st">&quot;/data&quot;</span>, <span class="dt">use_azcopy=</span><span class="ot">TRUE</span>)</span>
-<span id="cb9-4"><a href="#cb9-4"></a></span>
-<span id="cb9-5"><a href="#cb9-5"></a><span class="co"># use azcopy to sync a local and remote dir</span></span>
-<span id="cb9-6"><a href="#cb9-6"></a><span class="kw">call_azcopy</span>(<span class="st">&quot;sync&quot;</span>, <span class="st">&quot;c:/local/path&quot;</span>, <span class="st">&quot;https://mystorage.blob.core.windows.net/mycontainer&quot;</span>, <span class="st">&quot;--recursive=true&quot;</span>)</span></code></pre></div>
-<p>For more information, see the <a href="https://github.com/Azure/azure-storage-azcopy">AzCopy repo on GitHub</a>.</p>
-<p><strong>Note that AzureStor uses AzCopy version 10. It is incompatible with versions 8.1 and earlier.</strong></p>
+<p>AzureStor includes an interface to <a href="https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-v10">AzCopy</a>,
+Microsoft’s high-performance commandline utility for copying files to
+and from storage. To take advantage of this, simply include the argument
+<code>use_azcopy=TRUE</code> on any upload or download function.
+AzureStor will then call AzCopy to perform the file transfer, rather
+than using its own internal code. In addition, a
+<code>call_azcopy</code> function is provided to let you use AzCopy for
+any task.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="co"># use azcopy to download</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>myfs <span class="ot">&lt;-</span> <span class="fu">storage_container</span>(ad_endp, <span class="st">&quot;myfilesystem&quot;</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="fu">storage_download</span>(myfs, <span class="st">&quot;/incoming/bigfile.tar.gz&quot;</span>, <span class="st">&quot;/data&quot;</span>, <span class="at">use_azcopy=</span><span class="cn">TRUE</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co"># use azcopy to sync a local and remote dir</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="fu">call_azcopy</span>(<span class="st">&quot;sync&quot;</span>, <span class="st">&quot;c:/local/path&quot;</span>, <span class="st">&quot;https://mystorage.blob.core.windows.net/mycontainer&quot;</span>, <span class="st">&quot;--recursive=true&quot;</span>)</span></code></pre></div>
+<p>For more information, see the <a href="https://github.com/Azure/azure-storage-azcopy">AzCopy repo on
+GitHub</a>.</p>
+<p><strong>Note that AzureStor uses AzCopy version 10. It is
+incompatible with versions 8.1 and earlier.</strong></p>
 </div>
 </div>
 <div id="other-features" class="section level2">
 <h2>Other features</h2>
 <div id="parallel-connections-1" class="section level3">
 <h3>Parallel connections</h3>
-<p>The <code>storage_multiupload/download</code> functions mentioned above use a background process pool supplied by AzureRMR. You can also use this pool to parallelise tasks for which there is no built-in function. For example, the following code will delete multiple files in parallel:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1"></a>files_to_delete &lt;-<span class="st"> </span><span class="kw">list_storage_files</span>(container, <span class="st">&quot;datadir&quot;</span>, <span class="dt">info=</span><span class="st">&quot;name&quot;</span>)</span>
-<span id="cb10-2"><a href="#cb10-2"></a></span>
-<span id="cb10-3"><a href="#cb10-3"></a><span class="co"># initialise the background pool with 10 nodes</span></span>
-<span id="cb10-4"><a href="#cb10-4"></a>AzureRMR<span class="op">::</span><span class="kw">init_pool</span>(<span class="dv">10</span>)</span>
-<span id="cb10-5"><a href="#cb10-5"></a></span>
-<span id="cb10-6"><a href="#cb10-6"></a><span class="co"># export the container object to the nodes</span></span>
-<span id="cb10-7"><a href="#cb10-7"></a>AzureRMR<span class="op">::</span><span class="kw">pool_export</span>(<span class="st">&quot;cont&quot;</span>)</span>
-<span id="cb10-8"><a href="#cb10-8"></a></span>
-<span id="cb10-9"><a href="#cb10-9"></a><span class="co"># delete the files</span></span>
-<span id="cb10-10"><a href="#cb10-10"></a>AzureRMR<span class="op">::</span><span class="kw">pool_sapply</span>(files_to_delete, <span class="cf">function</span>(f) AzureStor<span class="op">::</span><span class="kw">delete_storage_file</span>(cont, f))</span></code></pre></div>
+<p>The <code>storage_multiupload/download</code> functions mentioned
+above use a background process pool supplied by AzureRMR. You can also
+use this pool to parallelise tasks for which there is no built-in
+function. For example, the following code will delete multiple files in
+parallel:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>files_to_delete <span class="ot">&lt;-</span> <span class="fu">list_storage_files</span>(container, <span class="st">&quot;datadir&quot;</span>, <span class="at">info=</span><span class="st">&quot;name&quot;</span>)</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="co"># initialise the background pool with 10 nodes</span></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>AzureRMR<span class="sc">::</span><span class="fu">init_pool</span>(<span class="dv">10</span>)</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="co"># export the container object to the nodes</span></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>AzureRMR<span class="sc">::</span><span class="fu">pool_export</span>(<span class="st">&quot;cont&quot;</span>)</span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="co"># delete the files</span></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>AzureRMR<span class="sc">::</span><span class="fu">pool_sapply</span>(files_to_delete, <span class="cf">function</span>(f) AzureStor<span class="sc">::</span><span class="fu">delete_storage_file</span>(cont, f))</span></code></pre></div>
 </div>
 <div id="metadata" class="section level3">
 <h3>Metadata</h3>
-<p>To get and set user-defined properties (metadata) for storage objects, use the <code>get_storage_metadata</code> and <code>set_storage_metadata</code> functions.</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a>fs &lt;-<span class="st"> </span><span class="kw">storage_container</span>(<span class="st">&quot;https://mystorage.dfs.core.windows.net/myshare&quot;</span>, <span class="dt">key=</span><span class="st">&quot;access_key&quot;</span>)</span>
-<span id="cb11-2"><a href="#cb11-2"></a><span class="kw">storage_upload</span>(share, <span class="st">&quot;iris.csv&quot;</span>, <span class="st">&quot;newdir/iris.csv&quot;</span>)</span>
-<span id="cb11-3"><a href="#cb11-3"></a></span>
-<span id="cb11-4"><a href="#cb11-4"></a><span class="kw">set_storage_metadata</span>(fs, <span class="st">&quot;newdir/iris.csv&quot;</span>, <span class="dt">name1=</span><span class="st">&quot;value1&quot;</span>)</span>
-<span id="cb11-5"><a href="#cb11-5"></a><span class="co"># will be list(name1=&quot;value1&quot;)</span></span>
-<span id="cb11-6"><a href="#cb11-6"></a><span class="kw">get_storage_metadata</span>(fs, <span class="st">&quot;newdir/iris.csv&quot;</span>)</span>
-<span id="cb11-7"><a href="#cb11-7"></a></span>
-<span id="cb11-8"><a href="#cb11-8"></a><span class="kw">set_storage_metadata</span>(fs, <span class="st">&quot;newdir/iris.csv&quot;</span>, <span class="dt">name2=</span><span class="st">&quot;value2&quot;</span>)</span>
-<span id="cb11-9"><a href="#cb11-9"></a><span class="co"># will be list(name1=&quot;value1&quot;, name2=&quot;value2&quot;)</span></span>
-<span id="cb11-10"><a href="#cb11-10"></a><span class="kw">get_storage_metadata</span>(fs, <span class="st">&quot;newdir/iris.csv&quot;</span>)</span>
-<span id="cb11-11"><a href="#cb11-11"></a></span>
-<span id="cb11-12"><a href="#cb11-12"></a><span class="kw">set_storage_metadata</span>(fs, <span class="st">&quot;newdir/iris.csv&quot;</span>, <span class="dt">name3=</span><span class="st">&quot;value3&quot;</span>, <span class="dt">keep_existing=</span><span class="ot">FALSE</span>)</span>
-<span id="cb11-13"><a href="#cb11-13"></a><span class="co"># will be list(name3=&quot;value3&quot;)</span></span>
-<span id="cb11-14"><a href="#cb11-14"></a><span class="kw">get_storage_metadata</span>(fs, <span class="st">&quot;newdir/iris.csv&quot;</span>)</span>
-<span id="cb11-15"><a href="#cb11-15"></a></span>
-<span id="cb11-16"><a href="#cb11-16"></a><span class="co"># deleting all metadata</span></span>
-<span id="cb11-17"><a href="#cb11-17"></a><span class="kw">set_storage_metadata</span>(fs, <span class="st">&quot;newdir/iris.csv&quot;</span>, <span class="dt">keep_existing=</span><span class="ot">FALSE</span>)</span>
-<span id="cb11-18"><a href="#cb11-18"></a></span>
-<span id="cb11-19"><a href="#cb11-19"></a><span class="co"># if no filename supplied, get/set metadata for the container</span></span>
-<span id="cb11-20"><a href="#cb11-20"></a><span class="kw">get_storage_metadata</span>(fs)</span></code></pre></div>
+<p>To get and set user-defined properties (metadata) for storage
+objects, use the <code>get_storage_metadata</code> and
+<code>set_storage_metadata</code> functions.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>fs <span class="ot">&lt;-</span> <span class="fu">storage_container</span>(<span class="st">&quot;https://mystorage.dfs.core.windows.net/myshare&quot;</span>, <span class="at">key=</span><span class="st">&quot;access_key&quot;</span>)</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="fu">storage_upload</span>(share, <span class="st">&quot;iris.csv&quot;</span>, <span class="st">&quot;newdir/iris.csv&quot;</span>)</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="fu">set_storage_metadata</span>(fs, <span class="st">&quot;newdir/iris.csv&quot;</span>, <span class="at">name1=</span><span class="st">&quot;value1&quot;</span>)</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="co"># will be list(name1=&quot;value1&quot;)</span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="fu">get_storage_metadata</span>(fs, <span class="st">&quot;newdir/iris.csv&quot;</span>)</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="fu">set_storage_metadata</span>(fs, <span class="st">&quot;newdir/iris.csv&quot;</span>, <span class="at">name2=</span><span class="st">&quot;value2&quot;</span>)</span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="co"># will be list(name1=&quot;value1&quot;, name2=&quot;value2&quot;)</span></span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a><span class="fu">get_storage_metadata</span>(fs, <span class="st">&quot;newdir/iris.csv&quot;</span>)</span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a></span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a><span class="fu">set_storage_metadata</span>(fs, <span class="st">&quot;newdir/iris.csv&quot;</span>, <span class="at">name3=</span><span class="st">&quot;value3&quot;</span>, <span class="at">keep_existing=</span><span class="cn">FALSE</span>)</span>
+<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a><span class="co"># will be list(name3=&quot;value3&quot;)</span></span>
+<span id="cb11-14"><a href="#cb11-14" tabindex="-1"></a><span class="fu">get_storage_metadata</span>(fs, <span class="st">&quot;newdir/iris.csv&quot;</span>)</span>
+<span id="cb11-15"><a href="#cb11-15" tabindex="-1"></a></span>
+<span id="cb11-16"><a href="#cb11-16" tabindex="-1"></a><span class="co"># deleting all metadata</span></span>
+<span id="cb11-17"><a href="#cb11-17" tabindex="-1"></a><span class="fu">set_storage_metadata</span>(fs, <span class="st">&quot;newdir/iris.csv&quot;</span>, <span class="at">keep_existing=</span><span class="cn">FALSE</span>)</span>
+<span id="cb11-18"><a href="#cb11-18" tabindex="-1"></a></span>
+<span id="cb11-19"><a href="#cb11-19" tabindex="-1"></a><span class="co"># if no filename supplied, get/set metadata for the container</span></span>
+<span id="cb11-20"><a href="#cb11-20" tabindex="-1"></a><span class="fu">get_storage_metadata</span>(fs)</span></code></pre></div>
 </div>
 </div>
 <div id="admin-interface" class="section level2">
 <h2>Admin interface</h2>
-<p>Finally, AzureStor’s admin-side interface allows you to easily create and delete resource accounts, as well as obtain access keys and generate a SAS. Here is a sample workflow:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1"></a><span class="kw">library</span>(AzureStor)</span>
-<span id="cb12-2"><a href="#cb12-2"></a></span>
-<span id="cb12-3"><a href="#cb12-3"></a><span class="co"># authenticate with Resource Manager</span></span>
-<span id="cb12-4"><a href="#cb12-4"></a>az &lt;-<span class="st"> </span>AzureRMR<span class="op">::</span><span class="kw">get_azure_login</span>(<span class="st">&quot;mytenant&quot;</span>)</span>
-<span id="cb12-5"><a href="#cb12-5"></a>sub1 &lt;-<span class="st"> </span>az<span class="op">$</span><span class="kw">get_subscription</span>(<span class="st">&quot;subscription_id&quot;</span>)</span>
-<span id="cb12-6"><a href="#cb12-6"></a>rg &lt;-<span class="st"> </span>sub1<span class="op">$</span><span class="kw">get_resource_group</span>(<span class="st">&quot;resgroup&quot;</span>)</span>
-<span id="cb12-7"><a href="#cb12-7"></a></span>
-<span id="cb12-8"><a href="#cb12-8"></a></span>
-<span id="cb12-9"><a href="#cb12-9"></a><span class="co"># get an existing storage account</span></span>
-<span id="cb12-10"><a href="#cb12-10"></a>rdevstor1 &lt;-<span class="st"> </span>rg<span class="op">$</span><span class="kw">get_storage</span>(<span class="st">&quot;rdevstor1&quot;</span>)</span>
-<span id="cb12-11"><a href="#cb12-11"></a>rdevstor1</span>
-<span id="cb12-12"><a href="#cb12-12"></a><span class="co">#&lt;Azure resource Microsoft.Storage/storageAccounts/rdevstor1&gt;</span></span>
-<span id="cb12-13"><a href="#cb12-13"></a><span class="co">#  Account type: Storage </span></span>
-<span id="cb12-14"><a href="#cb12-14"></a><span class="co">#  SKU: name=Standard_LRS, tier=Standard </span></span>
-<span id="cb12-15"><a href="#cb12-15"></a><span class="co">#  Endpoints:</span></span>
-<span id="cb12-16"><a href="#cb12-16"></a><span class="co">#    blob: https://rdevstor1.blob.core.windows.net/</span></span>
-<span id="cb12-17"><a href="#cb12-17"></a><span class="co">#    queue: https://rdevstor1.queue.core.windows.net/</span></span>
-<span id="cb12-18"><a href="#cb12-18"></a><span class="co">#    table: https://rdevstor1.table.core.windows.net/</span></span>
-<span id="cb12-19"><a href="#cb12-19"></a><span class="co">#    file: https://rdevstor1.file.core.windows.net/ </span></span>
-<span id="cb12-20"><a href="#cb12-20"></a><span class="co"># ...</span></span>
-<span id="cb12-21"><a href="#cb12-21"></a></span>
-<span id="cb12-22"><a href="#cb12-22"></a><span class="co"># retrieve admin keys</span></span>
-<span id="cb12-23"><a href="#cb12-23"></a>rdevstor1<span class="op">$</span><span class="kw">list_keys</span>()</span>
-<span id="cb12-24"><a href="#cb12-24"></a></span>
-<span id="cb12-25"><a href="#cb12-25"></a><span class="co"># create a shared access signature (SAS)</span></span>
-<span id="cb12-26"><a href="#cb12-26"></a>rdevstor1<span class="op">$</span><span class="kw">get_account_sas</span>(<span class="dt">permissions=</span><span class="st">&quot;rw&quot;</span>)</span>
-<span id="cb12-27"><a href="#cb12-27"></a></span>
-<span id="cb12-28"><a href="#cb12-28"></a><span class="co"># obtain an endpoint object for accessing storage (will have the access key included by default)</span></span>
-<span id="cb12-29"><a href="#cb12-29"></a>rdevstor1<span class="op">$</span><span class="kw">get_blob_endpoint</span>()</span>
-<span id="cb12-30"><a href="#cb12-30"></a><span class="co">#Azure blob storage endpoint</span></span>
-<span id="cb12-31"><a href="#cb12-31"></a><span class="co">#URL: https://rdevstor1.blob.core.windows.net/</span></span>
-<span id="cb12-32"><a href="#cb12-32"></a><span class="co">#Access key: &lt;hidden&gt;</span></span>
-<span id="cb12-33"><a href="#cb12-33"></a><span class="co">#Azure Active Directory token: &lt;none supplied&gt;</span></span>
-<span id="cb12-34"><a href="#cb12-34"></a><span class="co">#Account shared access signature: &lt;none supplied&gt;</span></span>
-<span id="cb12-35"><a href="#cb12-35"></a><span class="co">#Storage API version: 2018-03-28</span></span>
-<span id="cb12-36"><a href="#cb12-36"></a></span>
-<span id="cb12-37"><a href="#cb12-37"></a><span class="co"># create a new storage account</span></span>
-<span id="cb12-38"><a href="#cb12-38"></a>blobstor2 &lt;-<span class="st"> </span>rg<span class="op">$</span><span class="kw">create_storage_account</span>(<span class="st">&quot;blobstor2&quot;</span>, <span class="dt">location=</span><span class="st">&quot;australiaeast&quot;</span>, <span class="dt">kind=</span><span class="st">&quot;BlobStorage&quot;</span>)</span>
-<span id="cb12-39"><a href="#cb12-39"></a></span>
-<span id="cb12-40"><a href="#cb12-40"></a><span class="co"># delete it (will ask for confirmation)</span></span>
-<span id="cb12-41"><a href="#cb12-41"></a>blobstor2<span class="op">$</span><span class="kw">delete</span>()</span></code></pre></div>
-<p>For more information about the different types of storage, see the <a href="https://docs.microsoft.com/en-us/azure/storage/">Microsoft Docs site</a>. Note that there are other types of storage (queue, table) that do not have a client interface exposed by AzureStor.</p>
+<p>Finally, AzureStor’s admin-side interface allows you to easily create
+and delete resource accounts, as well as obtain access keys and generate
+a SAS. Here is a sample workflow:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="fu">library</span>(AzureStor)</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a></span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="co"># authenticate with Resource Manager</span></span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>az <span class="ot">&lt;-</span> AzureRMR<span class="sc">::</span><span class="fu">get_azure_login</span>(<span class="st">&quot;mytenant&quot;</span>)</span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>sub1 <span class="ot">&lt;-</span> az<span class="sc">$</span><span class="fu">get_subscription</span>(<span class="st">&quot;subscription_id&quot;</span>)</span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>rg <span class="ot">&lt;-</span> sub1<span class="sc">$</span><span class="fu">get_resource_group</span>(<span class="st">&quot;resgroup&quot;</span>)</span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a></span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a></span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a><span class="co"># get an existing storage account</span></span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a>rdevstor1 <span class="ot">&lt;-</span> rg<span class="sc">$</span><span class="fu">get_storage</span>(<span class="st">&quot;rdevstor1&quot;</span>)</span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a>rdevstor1</span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a><span class="co">#&lt;Azure resource Microsoft.Storage/storageAccounts/rdevstor1&gt;</span></span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a><span class="co">#  Account type: Storage </span></span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a><span class="co">#  SKU: name=Standard_LRS, tier=Standard </span></span>
+<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a><span class="co">#  Endpoints:</span></span>
+<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a><span class="co">#    blob: https://rdevstor1.blob.core.windows.net/</span></span>
+<span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a><span class="co">#    queue: https://rdevstor1.queue.core.windows.net/</span></span>
+<span id="cb12-18"><a href="#cb12-18" tabindex="-1"></a><span class="co">#    table: https://rdevstor1.table.core.windows.net/</span></span>
+<span id="cb12-19"><a href="#cb12-19" tabindex="-1"></a><span class="co">#    file: https://rdevstor1.file.core.windows.net/ </span></span>
+<span id="cb12-20"><a href="#cb12-20" tabindex="-1"></a><span class="co"># ...</span></span>
+<span id="cb12-21"><a href="#cb12-21" tabindex="-1"></a></span>
+<span id="cb12-22"><a href="#cb12-22" tabindex="-1"></a><span class="co"># retrieve admin keys</span></span>
+<span id="cb12-23"><a href="#cb12-23" tabindex="-1"></a>rdevstor1<span class="sc">$</span><span class="fu">list_keys</span>()</span>
+<span id="cb12-24"><a href="#cb12-24" tabindex="-1"></a></span>
+<span id="cb12-25"><a href="#cb12-25" tabindex="-1"></a><span class="co"># create a shared access signature (SAS)</span></span>
+<span id="cb12-26"><a href="#cb12-26" tabindex="-1"></a>rdevstor1<span class="sc">$</span><span class="fu">get_account_sas</span>(<span class="at">permissions=</span><span class="st">&quot;rw&quot;</span>)</span>
+<span id="cb12-27"><a href="#cb12-27" tabindex="-1"></a></span>
+<span id="cb12-28"><a href="#cb12-28" tabindex="-1"></a><span class="co"># obtain an endpoint object for accessing storage (will have the access key included by default)</span></span>
+<span id="cb12-29"><a href="#cb12-29" tabindex="-1"></a>rdevstor1<span class="sc">$</span><span class="fu">get_blob_endpoint</span>()</span>
+<span id="cb12-30"><a href="#cb12-30" tabindex="-1"></a><span class="co">#Azure blob storage endpoint</span></span>
+<span id="cb12-31"><a href="#cb12-31" tabindex="-1"></a><span class="co">#URL: https://rdevstor1.blob.core.windows.net/</span></span>
+<span id="cb12-32"><a href="#cb12-32" tabindex="-1"></a><span class="co">#Access key: &lt;hidden&gt;</span></span>
+<span id="cb12-33"><a href="#cb12-33" tabindex="-1"></a><span class="co">#Azure Active Directory token: &lt;none supplied&gt;</span></span>
+<span id="cb12-34"><a href="#cb12-34" tabindex="-1"></a><span class="co">#Account shared access signature: &lt;none supplied&gt;</span></span>
+<span id="cb12-35"><a href="#cb12-35" tabindex="-1"></a><span class="co">#Storage API version: 2018-03-28</span></span>
+<span id="cb12-36"><a href="#cb12-36" tabindex="-1"></a></span>
+<span id="cb12-37"><a href="#cb12-37" tabindex="-1"></a><span class="co"># create a new storage account</span></span>
+<span id="cb12-38"><a href="#cb12-38" tabindex="-1"></a>blobstor2 <span class="ot">&lt;-</span> rg<span class="sc">$</span><span class="fu">create_storage_account</span>(<span class="st">&quot;blobstor2&quot;</span>, <span class="at">location=</span><span class="st">&quot;australiaeast&quot;</span>, <span class="at">kind=</span><span class="st">&quot;BlobStorage&quot;</span>)</span>
+<span id="cb12-39"><a href="#cb12-39" tabindex="-1"></a></span>
+<span id="cb12-40"><a href="#cb12-40" tabindex="-1"></a><span class="co"># delete it (will ask for confirmation)</span></span>
+<span id="cb12-41"><a href="#cb12-41" tabindex="-1"></a>blobstor2<span class="sc">$</span><span class="fu">delete</span>()</span></code></pre></div>
+<p>For more information about the different types of storage, see the <a href="https://learn.microsoft.com/en-us/azure/storage/">Microsoft Docs
+site</a>. Note that there are other types of storage (queue, table) that
+do not have a client interface exposed by AzureStor.</p>
 </div>
 
 

@@ -15,74 +15,103 @@
 
 <title>AzureStor 2.0 client generics and methods</title>
 
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
 
 
-<style type="text/css">code{white-space: pre;}</style>
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
 <style type="text/css" data-origin="pandoc">
-code.sourceCode > span { display: inline-block; line-height: 1.25; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-code.sourceCode > span:empty { height: 1.2em; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
-code.sourceCode { white-space: pre; position: relative; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
 div.sourceCode { margin: 1em 0; }
 pre.sourceCode { margin: 0; }
 @media screen {
 div.sourceCode { overflow: auto; }
 }
 @media print {
-code.sourceCode { white-space: pre-wrap; }
-code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
-  { counter-reset: source-line 0; }
+{ counter-reset: source-line 0; }
 pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
+{ position: relative; left: -4em; counter-increment: source-line; }
 pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-    color: #aaaaaa;
-  }
-pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
 }
-code span.al { color: #ff0000; font-weight: bold; } /* Alert */
-code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
-code span.at { color: #7d9029; } /* Attribute */
-code span.bn { color: #40a070; } /* BaseN */
-code span.bu { } /* BuiltIn */
-code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
-code span.ch { color: #4070a0; } /* Char */
-code span.cn { color: #880000; } /* Constant */
-code span.co { color: #60a0b0; font-style: italic; } /* Comment */
-code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
-code span.do { color: #ba2121; font-style: italic; } /* Documentation */
-code span.dt { color: #902000; } /* DataType */
-code span.dv { color: #40a070; } /* DecVal */
-code span.er { color: #ff0000; font-weight: bold; } /* Error */
-code span.ex { } /* Extension */
-code span.fl { color: #40a070; } /* Float */
-code span.fu { color: #06287e; } /* Function */
-code span.im { } /* Import */
-code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
-code span.kw { color: #007020; font-weight: bold; } /* Keyword */
-code span.op { color: #666666; } /* Operator */
-code span.ot { color: #007020; } /* Other */
-code span.pp { color: #bc7a00; } /* Preprocessor */
-code span.sc { color: #4070a0; } /* SpecialChar */
-code span.ss { color: #bb6688; } /* SpecialString */
-code span.st { color: #4070a0; } /* String */
-code span.va { color: #19177c; } /* Variable */
-code span.vs { color: #4070a0; } /* VerbatimString */
-code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
-
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
 </style>
 <script>
 // apply pandoc div.sourceCode style to pre.sourceCode instead
@@ -91,13 +120,20 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   for (var i = 0; i < sheets.length; i++) {
     if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
     try { var rules = sheets[i].cssRules; } catch (e) { continue; }
-    for (var j = 0; j < rules.length; j++) {
+    var j = 0;
+    while (j < rules.length) {
       var rule = rules[j];
       // check if there is a div.sourceCode rule
-      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
       var style = rule.style.cssText;
       // check if color or background-color is set
-      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
       // replace div.sourceCode by a pre.sourceCode rule
       sheets[i].deleteRule(j);
       sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
@@ -105,6 +141,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   }
 })();
 </script>
+
 
 
 
@@ -300,43 +337,55 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 
-<h1 class="title toc-ignore">AzureStor 2.0 client generics and methods</h1>
+<h1 class="title toc-ignore">AzureStor 2.0 client generics and
+methods</h1>
 <h4 class="author">Hong Ooi</h4>
 
 
 
-<p>AzureStor 1.0 defined several functions for working with storage, which were specific to each storage type: blob, file or ADLSgen2. AzureStor 2.0 organises these functions into a consistent framework, using S3 generics and methods.</p>
-<p>The client framework for AzureStor 2.0 is described here. While the original interface is still supported, it’s recommended that you use the new framework as it protects against specifying the wrong function for a given storage type.</p>
+<p>AzureStor 1.0 defined several functions for working with storage,
+which were specific to each storage type: blob, file or ADLSgen2.
+AzureStor 2.0 organises these functions into a consistent framework,
+using S3 generics and methods.</p>
+<p>The client framework for AzureStor 2.0 is described here. While the
+original interface is still supported, it’s recommended that you use the
+new framework as it protects against specifying the wrong function for a
+given storage type.</p>
 <div id="storage-endpoints-and-containers" class="section level2">
 <h2>Storage endpoints and containers</h2>
-<p>The <code>storage_endpoint</code> creates a storage endpoint object based on the URL specified. The <code>blob_endpoint</code>, <code>file_endpoint</code> and <code>adls_endpoint</code> functions do the same thing, but require that the URL and the function match.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="co"># generic endpoint function: storage type inferred from URL</span></span>
-<span id="cb1-2"><a href="#cb1-2"></a><span class="kw">storage_endpoint</span>(<span class="st">&quot;https://mystorage.blob.core.windows.net/&quot;</span>, ...)  <span class="co"># blob endpoint</span></span>
-<span id="cb1-3"><a href="#cb1-3"></a><span class="kw">storage_endpoint</span>(<span class="st">&quot;https://mystorage.file.core.windows.net/&quot;</span>, ...)  <span class="co"># file endpoint</span></span>
-<span id="cb1-4"><a href="#cb1-4"></a><span class="kw">storage_endpoint</span>(<span class="st">&quot;https://mystorage.dfs.core.windows.net/&quot;</span>, ...)   <span class="co"># ADLSgen2 endpoint</span></span>
-<span id="cb1-5"><a href="#cb1-5"></a></span>
-<span id="cb1-6"><a href="#cb1-6"></a><span class="co"># storage-type-specific functions</span></span>
-<span id="cb1-7"><a href="#cb1-7"></a><span class="kw">blob_endpoint</span>(<span class="st">&quot;https://mystorage.blob.core.windows.net/&quot;</span>, ...)     <span class="co"># blob endpoint</span></span>
-<span id="cb1-8"><a href="#cb1-8"></a><span class="kw">file_endpoint</span>(<span class="st">&quot;https://mystorage.file.core.windows.net/&quot;</span>, ...)     <span class="co"># file endpoint</span></span>
-<span id="cb1-9"><a href="#cb1-9"></a><span class="kw">adls_endpoint</span>(<span class="st">&quot;https://mystorage.dfs.core.windows.net/&quot;</span>, ...)      <span class="co"># ADLSgen2 endpoint</span></span>
-<span id="cb1-10"><a href="#cb1-10"></a></span>
-<span id="cb1-11"><a href="#cb1-11"></a><span class="co"># error: using the wrong function for a given storage type</span></span>
-<span id="cb1-12"><a href="#cb1-12"></a><span class="co"># this is not possible with the new framework</span></span>
-<span id="cb1-13"><a href="#cb1-13"></a><span class="kw">file_endpoint</span>(<span class="st">&quot;https://mystorage.blob.core.windows.net/&quot;</span>)</span></code></pre></div>
-<p>The following generics are for managing storage containers, given a storage endpoint of a given type (blob, file or ADLSgen2):</p>
+<p>The <code>storage_endpoint</code> creates a storage endpoint object
+based on the URL specified. The <code>blob_endpoint</code>,
+<code>file_endpoint</code> and <code>adls_endpoint</code> functions do
+the same thing, but require that the URL and the function match.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="co"># generic endpoint function: storage type inferred from URL</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">storage_endpoint</span>(<span class="st">&quot;https://mystorage.blob.core.windows.net/&quot;</span>, ...)  <span class="co"># blob endpoint</span></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">storage_endpoint</span>(<span class="st">&quot;https://mystorage.file.core.windows.net/&quot;</span>, ...)  <span class="co"># file endpoint</span></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="fu">storage_endpoint</span>(<span class="st">&quot;https://mystorage.dfs.core.windows.net/&quot;</span>, ...)   <span class="co"># ADLSgen2 endpoint</span></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="co"># storage-type-specific functions</span></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="fu">blob_endpoint</span>(<span class="st">&quot;https://mystorage.blob.core.windows.net/&quot;</span>, ...)     <span class="co"># blob endpoint</span></span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="fu">file_endpoint</span>(<span class="st">&quot;https://mystorage.file.core.windows.net/&quot;</span>, ...)     <span class="co"># file endpoint</span></span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="fu">adls_endpoint</span>(<span class="st">&quot;https://mystorage.dfs.core.windows.net/&quot;</span>, ...)      <span class="co"># ADLSgen2 endpoint</span></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a><span class="co"># error: using the wrong function for a given storage type</span></span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="co"># this is not possible with the new framework</span></span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a><span class="fu">file_endpoint</span>(<span class="st">&quot;https://mystorage.blob.core.windows.net/&quot;</span>)</span></code></pre></div>
+<p>The following generics are for managing storage containers, given a
+storage endpoint of a given type (blob, file or ADLSgen2):</p>
 <ul>
 <li><code>storage_container</code>: get a storage container</li>
 <li><code>create_storage_container</code></li>
 <li><code>delete_storage_container</code></li>
 <li><code>list_storage_containers</code></li>
 </ul>
-<p>In turn these dispatch to the following lower-level functions for each type of storage:</p>
+<p>In turn these dispatch to the following lower-level functions for
+each type of storage:</p>
 <table>
 <colgroup>
-<col width="35%"></col>
-<col width="20%"></col>
-<col width="20%"></col>
-<col width="25%"></col>
+<col width="35%" />
+<col width="20%" />
+<col width="20%" />
+<col width="25%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -373,42 +422,49 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 </tr>
 </tbody>
 </table>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="co"># example of working with containers (blob storage)</span></span>
-<span id="cb2-2"><a href="#cb2-2"></a>bl_endp_key &lt;-<span class="st"> </span><span class="kw">storage_endpoint</span>(<span class="st">&quot;https://mystorage.blob.core.windows.net/&quot;</span>, <span class="dt">key=</span><span class="st">&quot;mykey&quot;</span>)</span>
-<span id="cb2-3"><a href="#cb2-3"></a><span class="kw">list_storage_containers</span>(bl_endp_key)</span>
-<span id="cb2-4"><a href="#cb2-4"></a>cont &lt;-<span class="st"> </span><span class="kw">storage_container</span>(bl_endp, <span class="st">&quot;mycontainer&quot;</span>)</span>
-<span id="cb2-5"><a href="#cb2-5"></a>newcont &lt;-<span class="st"> </span><span class="kw">create_storage_container</span>(bl_endp, <span class="st">&quot;newcontainer&quot;</span>)</span>
-<span id="cb2-6"><a href="#cb2-6"></a><span class="kw">delete_storage_container</span>(newcont)</span>
-<span id="cb2-7"><a href="#cb2-7"></a></span>
-<span id="cb2-8"><a href="#cb2-8"></a><span class="co"># you can also call the lower-level functions directly if desired</span></span>
-<span id="cb2-9"><a href="#cb2-9"></a>bl_endp_key &lt;-<span class="st"> </span><span class="kw">blob_endpoint</span>(<span class="st">&quot;https://mystorage.blob.core.windows.net/&quot;</span>, <span class="dt">key=</span><span class="st">&quot;mykey&quot;</span>)</span>
-<span id="cb2-10"><a href="#cb2-10"></a><span class="kw">list_blob_containers</span>(bl_endp_key)</span>
-<span id="cb2-11"><a href="#cb2-11"></a>cont &lt;-<span class="st"> </span><span class="kw">blob_container</span>(bl_endp, <span class="st">&quot;mycontainer&quot;</span>)</span>
-<span id="cb2-12"><a href="#cb2-12"></a>newcont &lt;-<span class="st"> </span><span class="kw">create_blob_container</span>(bl_endp, <span class="st">&quot;newcontainer&quot;</span>)</span>
-<span id="cb2-13"><a href="#cb2-13"></a><span class="kw">delete_blob_container</span>(newcont)</span>
-<span id="cb2-14"><a href="#cb2-14"></a></span>
-<span id="cb2-15"><a href="#cb2-15"></a><span class="co"># error: using the wrong function for a given storage type</span></span>
-<span id="cb2-16"><a href="#cb2-16"></a><span class="co"># this is not possible with the new framework</span></span>
-<span id="cb2-17"><a href="#cb2-17"></a><span class="kw">list_file_shares</span>(bl_endp_key)</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># example of working with containers (blob storage)</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>bl_endp_key <span class="ot">&lt;-</span> <span class="fu">storage_endpoint</span>(<span class="st">&quot;https://mystorage.blob.core.windows.net/&quot;</span>, <span class="at">key=</span><span class="st">&quot;mykey&quot;</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="fu">list_storage_containers</span>(bl_endp_key)</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>cont <span class="ot">&lt;-</span> <span class="fu">storage_container</span>(bl_endp, <span class="st">&quot;mycontainer&quot;</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>newcont <span class="ot">&lt;-</span> <span class="fu">create_storage_container</span>(bl_endp, <span class="st">&quot;newcontainer&quot;</span>)</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="fu">delete_storage_container</span>(newcont)</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="co"># you can also call the lower-level functions directly if desired</span></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>bl_endp_key <span class="ot">&lt;-</span> <span class="fu">blob_endpoint</span>(<span class="st">&quot;https://mystorage.blob.core.windows.net/&quot;</span>, <span class="at">key=</span><span class="st">&quot;mykey&quot;</span>)</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a><span class="fu">list_blob_containers</span>(bl_endp_key)</span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>cont <span class="ot">&lt;-</span> <span class="fu">blob_container</span>(bl_endp, <span class="st">&quot;mycontainer&quot;</span>)</span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>newcont <span class="ot">&lt;-</span> <span class="fu">create_blob_container</span>(bl_endp, <span class="st">&quot;newcontainer&quot;</span>)</span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a><span class="fu">delete_blob_container</span>(newcont)</span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="co"># error: using the wrong function for a given storage type</span></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="co"># this is not possible with the new framework</span></span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a><span class="fu">list_file_shares</span>(bl_endp_key)</span></code></pre></div>
 </div>
 <div id="files-and-blobs" class="section level2">
 <h2>Files and blobs</h2>
-<p>The following generics are for working with objects within a storage container:</p>
+<p>The following generics are for working with objects within a storage
+container:</p>
 <ul>
-<li><code>list_storage_files</code>: list files/blobs in a directory (for ADLSgen2 and file storage) or blob container</li>
-<li><code>create_storage_dir</code>: for ADLSgen2 and file storage, create a directory</li>
-<li><code>delete_storage_dir</code>: for ADLSgen2 and file storage, delete a directory</li>
+<li><code>list_storage_files</code>: list files/blobs in a directory
+(for ADLSgen2 and file storage) or blob container</li>
+<li><code>create_storage_dir</code>: for ADLSgen2 and file storage,
+create a directory</li>
+<li><code>delete_storage_dir</code>: for ADLSgen2 and file storage,
+delete a directory</li>
 <li><code>delete_storage_file</code>: delete a file or blob</li>
-<li><code>storage_upload</code>/<code>storage_download</code>: transfer a file to or from a storage container</li>
-<li><code>storage_multiupload</code>/<code>storage_multidownload</code>: transfer multiple files in parallel to or from a storage container</li>
+<li><code>storage_upload</code>/<code>storage_download</code>: transfer
+a file to or from a storage container</li>
+<li><code>storage_multiupload</code>/<code>storage_multidownload</code>:
+transfer multiple files in parallel to or from a storage container</li>
 </ul>
-<p>As before, these dispatch to a family of lower-level functions for each type of storage:</p>
+<p>As before, these dispatch to a family of lower-level functions for
+each type of storage:</p>
 <table>
 <colgroup>
-<col width="35%"></col>
-<col width="20%"></col>
-<col width="20%"></col>
-<col width="25%"></col>
+<col width="35%" />
+<col width="20%" />
+<col width="20%" />
+<col width="25%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -481,17 +537,17 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 </tr>
 </tbody>
 </table>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="co"># example workflow with generics (blob storage)</span></span>
-<span id="cb3-2"><a href="#cb3-2"></a>cont &lt;-<span class="st"> </span><span class="kw">storage_container</span>(bl_endp, <span class="st">&quot;mycontainer&quot;</span>)</span>
-<span id="cb3-3"><a href="#cb3-3"></a><span class="kw">list_storage_files</span>(cont)</span>
-<span id="cb3-4"><a href="#cb3-4"></a><span class="kw">storage_upload</span>(cont, <span class="st">&quot;description.txt&quot;</span>, <span class="st">&quot;description&quot;</span>)</span>
-<span id="cb3-5"><a href="#cb3-5"></a><span class="kw">storage_multiupload</span>(cont, <span class="st">&quot;*.tar.gz&quot;</span>)</span>
-<span id="cb3-6"><a href="#cb3-6"></a></span>
-<span id="cb3-7"><a href="#cb3-7"></a><span class="co"># using lower-level functions</span></span>
-<span id="cb3-8"><a href="#cb3-8"></a>cont &lt;-<span class="st"> </span><span class="kw">blob_container</span>(bl_endp, <span class="st">&quot;mycontainer&quot;</span>)</span>
-<span id="cb3-9"><a href="#cb3-9"></a><span class="kw">list_blobs</span>(cont)</span>
-<span id="cb3-10"><a href="#cb3-10"></a><span class="kw">upload_blob</span>(cont, <span class="st">&quot;description.txt&quot;</span>, <span class="st">&quot;description&quot;</span>)</span>
-<span id="cb3-11"><a href="#cb3-11"></a><span class="kw">multiupload_blob</span>(cont, <span class="st">&quot;*.tar.gz&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># example workflow with generics (blob storage)</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>cont <span class="ot">&lt;-</span> <span class="fu">storage_container</span>(bl_endp, <span class="st">&quot;mycontainer&quot;</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="fu">list_storage_files</span>(cont)</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="fu">storage_upload</span>(cont, <span class="st">&quot;description.txt&quot;</span>, <span class="st">&quot;description&quot;</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="fu">storage_multiupload</span>(cont, <span class="st">&quot;*.tar.gz&quot;</span>)</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co"># using lower-level functions</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>cont <span class="ot">&lt;-</span> <span class="fu">blob_container</span>(bl_endp, <span class="st">&quot;mycontainer&quot;</span>)</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="fu">list_blobs</span>(cont)</span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="fu">upload_blob</span>(cont, <span class="st">&quot;description.txt&quot;</span>, <span class="st">&quot;description&quot;</span>)</span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="fu">multiupload_blob</span>(cont, <span class="st">&quot;*.tar.gz&quot;</span>)</span></code></pre></div>
 </div>
 
 
